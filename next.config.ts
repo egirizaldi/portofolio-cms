@@ -1,0 +1,19 @@
+import type { NextConfig } from "next";
+import path from "node:path";
+
+const nextConfig: NextConfig = {
+  // Konten dikelola lewat CMS dan dibaca per request, sehingga halaman publik
+  // memakai `export const dynamic = "force-dynamic"` (tidak kompatibel dengan cacheComponents).
+  cacheComponents: false,
+  turbopack: {
+    root: path.resolve(__dirname),
+    rules: {
+      "*.css": {
+        loaders: ["@tailwindcss/turbopack"],
+        as: "*.css",
+      },
+    },
+  },
+};
+
+export default nextConfig;
