@@ -1,0 +1,94 @@
+// API routes untuk Project (public GET & admin POST)
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/db/prisma";
+import { projectSchema } from "@/lib/validations/project";
+import { requireAdmin } from "@/lib/auth/guards";
+
+/**
+ * GET /api/projects
+ * - Tanpa query param: mengembalikan semua project (untuk admin).
+ * - Dengan `status=PUBLISHED` atau `public=true`: hanya project yang dipublikasikan.
+ */
+export async function GET(request: Request) {
+  const url = new URL(request.url);
+  const isPublic = url.searchParams.get("public") === "true" || url.searchParams.get("status") === "PUBLISHED";
+
+  // Pagination & filter
+  const page = Math.max(parseInt(url.searchParams.get("page") ?? "1"), 1);
+  const limit = Math.max(parseInt(url.searchParams.get("limit") ?? "20"), 1);
+  const search = url.searchParams.get("search")?.trim();
+  const categoryId = url.searchParams.get("categoryId");
+
+  const where: any = isPublic ? { status: "PUBLISHED" as const } : {};
+  if (search) {
+    where.OR = [
+      { title: { contains: search, mode: "insensitive" } },
+      { shortDescription: { contains: search, mode: "insensitive" } },
+    ];
+  }
+  if (categoryId) {
+    where.categories = { some: { id: categoryId } };
+  }
+
+  const projects = await prisma.project.findMany({
+    where,
+    skip: (page - 1) * limit,
+    take: limit,
+    include: {
+      categories: { select: { id: true, name: true } },
+      images: { select: { id: true, imagePath: true, altText: true, displayOrder: true } },
+    },
+    orderBy: [{ isFeatured: "desc" }, { createdAt: "desc" }],
+  });
+
+  const total = await prisma.project.count({ where });
+  return NextResponse.json({ data: projects, meta: { page, limit, total } });
+}
+  const url = new URL(request.url);
+  const isPublic = url.searchParams.get("public") === "true" || url.searchParams.get("status") === "PUBLISHED";
+
+  const where = isPublic ? { status: "PUBLISHED" as const } : {};
+
+  const projects = await prisma.project.findMany({
+    where,
+    include: {
+      categories: { select: { id: true, name: true } },
+      images: { select: { id: true, imagePath: true, altText: true, displayOrder: true } },
+    },
+    orderBy: [{ isFeatured: "desc" }, { createdAt: "desc" }],
+  });
+
+  return NextResponse.json(projects);
+}
+
+/**
+ * POST /api/projects
+ * - Hanya dapat diakses admin (session required).
+ * - Body harus sesuai `projectSchema`.
+ * - `categoryIds` diproses menjadi relasi many‑to‑many.
+ */
+export async function POST(request: Request) {
+  // Pastikan admin sudah login
+  await requireAdmin();
+
+  const json = await request.json();
+  const result = projectSchema.safeParse(json);
+  if (!result.success) {
+    return NextResponse.json({ error: "Invalid input", details: result.error.format() }, { status: 400 });
+  }
+  const data = result.data;
+
+  const { categoryIds, ...projectData } = data;
+
+  const created = await prisma.project.create({
+    data: {
+      ...projectData,
+      categories: {
+        connect: categoryIds.map((id) => ({ id })),
+      },
+    },
+    include: { categories: true },
+  });
+
+  return NextResponse.json(created, { status: 201 });
+}
