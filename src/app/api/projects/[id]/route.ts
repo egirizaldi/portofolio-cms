@@ -2,20 +2,17 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 import { projectSchema } from "@/lib/validations/project";
-import { requireAdmin } from "@/lib/auth/guards";
+import { requireAdminApi } from "@/lib/auth/guards";
 
 /**
  * GET /api/projects/:id
  * - Mengembalikan data project beserta relasi (categories, images).
  */
-export async function GET(request: Request, { params }: { params: { id: string } }) {
-  const { id } = params;
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const project = await prisma.project.findUnique({
     where: { id },
-    include: {
-      categories: true,
-      images: true,
-    },
+    include: { categories: true, images: true },
   });
   if (!project) {
     return NextResponse.json({ error: "Project not found" }, { status: 404 });
@@ -28,11 +25,10 @@ export async function GET(request: Request, { params }: { params: { id: string }
  * - Hanya admin yang dapat mengupdate.
  * - Validasi menggunakan `projectSchema` (semua field optional kecuali yang ingin diubah).
  */
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
-  await requireAdmin();
-  const { id } = params;
+export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  await requireAdminApi();
+  const { id } = await params;
   const json = await request.json();
-  // gunakan schema butuh semua field; karena update, buat schema partial
   const partialSchema = projectSchema.partial();
   const result = partialSchema.safeParse(json);
   if (!result.success) {
@@ -47,9 +43,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
       ...projectData,
       ...(categoryIds && {
         categories: {
-          // set relasi baru, menghapus lama dan menghubungkan yang baru
-          set: [],
-          connect: categoryIds.map((cid: string) => ({ id: cid })),
+          set: categoryIds.map((cid: string) => ({ id: cid })),
         },
       }),
     },

@@ -13,6 +13,41 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const isPublic = url.searchParams.get("public") === "true" || url.searchParams.get("status") === "PUBLISHED";
 
+  // Pagination & validation
+  const page = Math.max(parseInt(url.searchParams.get("page") ?? "1"), 1);
+  const rawLimit = parseInt(url.searchParams.get("limit") ?? "20");
+  const limit = Math.min(Math.max(rawLimit, 1), 100); // max 100
+
+  const search = url.searchParams.get("search")?.trim();
+  const categoryId = url.searchParams.get("categoryId");
+
+  const where: any = isPublic ? { status: "PUBLISHED" as const } : {};
+  if (search) {
+    where.OR = [
+      { title: { contains: search, mode: "insensitive" } },
+      { shortDescription: { contains: search, mode: "insensitive" } },
+    ];
+  }
+  if (categoryId) {
+    where.categories = { some: { id: categoryId } };
+  }
+
+  const projects = await prisma.project.findMany({
+    where,
+    skip: (page - 1) * limit,
+    take: limit,
+    include: {
+      categories: { select: { id: true, name: true } },
+      images: { select: { id: true, imagePath: true, altText: true, displayOrder: true } },
+    },
+    orderBy: [{ isFeatured: "desc" }, { createdAt: "desc" }],
+  });
+
+  const total = await prisma.project.count({ where });
+  return NextResponse.json({ data: projects, meta: { page, limit, total } });
+  const url = new URL(request.url);
+  const isPublic = url.searchParams.get("public") === "true" || url.searchParams.get("status") === "PUBLISHED";
+
   // Pagination & filter
   const page = Math.max(parseInt(url.searchParams.get("page") ?? "1"), 1);
   const limit = Math.max(parseInt(url.searchParams.get("limit") ?? "20"), 1);
@@ -44,21 +79,6 @@ export async function GET(request: Request) {
   const total = await prisma.project.count({ where });
   return NextResponse.json({ data: projects, meta: { page, limit, total } });
 }
-  const url = new URL(request.url);
-  const isPublic = url.searchParams.get("public") === "true" || url.searchParams.get("status") === "PUBLISHED";
-
-  const where = isPublic ? { status: "PUBLISHED" as const } : {};
-
-  const projects = await prisma.project.findMany({
-    where,
-    include: {
-      categories: { select: { id: true, name: true } },
-      images: { select: { id: true, imagePath: true, altText: true, displayOrder: true } },
-    },
-    orderBy: [{ isFeatured: "desc" }, { createdAt: "desc" }],
-  });
-
-  return NextResponse.json(projects);
 }
 
 /**

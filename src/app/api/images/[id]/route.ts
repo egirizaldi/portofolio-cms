@@ -1,15 +1,15 @@
 // API route untuk meng‑update metadata gambar proyek (altText & displayOrder)
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
-import { requireAdmin } from "@/lib/auth/guards";
+import { requireAdminApi } from "@/lib/auth/guards";
 import { projectImageSchema } from "@/lib/validations/projectImage";
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  await requireAdmin();
-  const { id } = params;
+  await requireAdminApi();
+  const { id } = await params;
 
   const json = await request.json();
   // Hanya allow fields yang ada di schema (partial)
