@@ -5,6 +5,8 @@ const nextConfig: NextConfig = {
   // Konten dikelola lewat CMS dan dibaca per request, sehingga halaman publik
   // memakai `export const dynamic = "force-dynamic"` (tidak kompatibel dengan cacheComponents).
   cacheComponents: false,
+  // Izinkan akses dev via localhost maupun 127.0.0.1 (termasuk saat testing otomatis).
+  allowedDevOrigins: ["127.0.0.1", "localhost"],
   turbopack: {
     root: path.resolve(__dirname),
     rules: {
