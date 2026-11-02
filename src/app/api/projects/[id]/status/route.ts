@@ -1,7 +1,7 @@
 // API route untuk mengubah status (draft/published) sebuah project
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
-import { requireAdmin } from "@/lib/auth/guards";
+import { requireAdminApi } from "@/lib/auth/guards";
 import { z } from "zod";
 
 const statusSchema = z.object({
