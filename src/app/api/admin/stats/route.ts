@@ -7,15 +7,27 @@ export async function GET() {
   // Pastikan hanya admin yang dapat mengakses
   await requireAdmin();
 
-  const [projectTotal, projectPublished, projectDraft] = await Promise.all([
+  const [
+    projectTotal,
+    projectPublished,
+    projectDraft,
+    categoryCount,
+    skillCount,
+    experienceCount,
+    educationCount,
+    certificateCount,
+    messageTotal,
+    messageUnread,
+  ] = await Promise.all([
     prisma.project.count(),
     prisma.project.count({ where: { status: "PUBLISHED" as const } }),
     prisma.project.count({ where: { status: "DRAFT" as const } }),
-  ]);
-
-  const [categoryCount, skillCount, messageUnread] = await Promise.all([
     prisma.category.count(),
     prisma.skill.count(),
+    prisma.experience.count(),
+    prisma.education.count(),
+    prisma.certificate.count(),
+    prisma.message.count(),
     prisma.message.count({ where: { status: "UNREAD" as const } }),
   ]);
 
@@ -27,7 +39,11 @@ export async function GET() {
     },
     categories: categoryCount,
     skills: skillCount,
+    experiences: experienceCount,
+    educations: educationCount,
+    certificates: certificateCount,
     messages: {
+      total: messageTotal,
       unread: messageUnread,
     },
   };

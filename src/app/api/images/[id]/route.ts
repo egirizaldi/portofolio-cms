@@ -1,14 +1,14 @@
-// API route untuk meng‑update metadata gambar proyek (altText & displayOrder)
+// API route untuk meng‑update metadata gambar proyek dan menghapus gambar
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
-import { requireAdminApi } from "@/lib/auth/guards";
+import { requireAdmin } from "@/lib/auth/guards";
 import { projectImageSchema } from "@/lib/validations/projectImage";
 
 export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  await requireAdminApi();
+  await requireAdmin();
   const { id } = await params;
 
   const json = await request.json();
@@ -31,4 +31,20 @@ export async function PUT(
     },
   });
   return NextResponse.json(updated);
+}
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  await requireAdmin();
+  const { id } = await params;
+
+  const existing = await prisma.projectImage.findUnique({ where: { id } });
+  if (!existing) {
+    return NextResponse.json({ error: "Image not found" }, { status: 404 });
+  }
+
+  await prisma.projectImage.delete({ where: { id } });
+  return NextResponse.json({ success: true });
 }

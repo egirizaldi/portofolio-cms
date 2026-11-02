@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 import { projectSchema } from "@/lib/validations/project";
-import { requireAdminApi } from "@/lib/auth/guards";
+import { requireAdmin } from "@/lib/auth/guards";
 
 /**
  * GET /api/projects/:id
@@ -26,7 +26,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
  * - Validasi menggunakan `projectSchema` (semua field optional kecuali yang ingin diubah).
  */
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  await requireAdminApi();
+  await requireAdmin();
   const { id } = await params;
   const json = await request.json();
   const partialSchema = projectSchema.partial();
@@ -35,7 +35,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     return NextResponse.json({ error: "Invalid input", details: result.error.format() }, { status: 400 });
   }
   const data = result.data;
-  const { categoryIds, ...projectData } = data as any;
+  const { categoryIds, ...projectData } = data;
 
   const updated = await prisma.project.update({
     where: { id },
@@ -43,7 +43,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       ...projectData,
       ...(categoryIds && {
         categories: {
-          set: categoryIds.map((cid: string) => ({ id: cid })),
+          set: categoryIds.map((cid) => ({ id: cid })),
         },
       }),
     },
@@ -57,9 +57,9 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
  * - Hanya admin yang dapat menghapus.
  * - Menggunakan cascade delete (Prisma menghapus gambar terkait secara otomatis).
  */
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   await requireAdmin();
-  const { id } = params;
+  const { id } = await params;
   // Pastikan ada project
   const existing = await prisma.project.findUnique({ where: { id } });
   if (!existing) {
