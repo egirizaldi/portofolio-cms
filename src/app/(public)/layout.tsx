@@ -2,14 +2,7 @@ import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { FooterYear } from "@/components/public/footer-year";
-
-const links = [
-  { href: "/about", label: "About" },
-  { href: "/projects", label: "Projects" },
-  { href: "/experience", label: "Experience" },
-  { href: "/certificates", label: "Certificates" },
-  { href: "/contact", label: "Contact" },
-];
+import { PublicNav } from "@/components/public/public-nav";
 
 export default function PublicLayout({
   children,
@@ -23,19 +16,8 @@ export default function PublicLayout({
           <Link href="/" className="text-sm font-semibold tracking-tight">
             Portfolio
           </Link>
-          <nav className="hidden items-center gap-1 sm:flex">
-            {links.map((link) => (
-              <Button
-                key={link.href}
-                variant="ghost"
-                size="sm"
-                render={<Link href={link.href} />}
-              >
-                {link.label}
-              </Button>
-            ))}
-          </nav>
-          <Button size="sm" render={<Link href="/contact" />}>
+          <PublicNav />
+          <Button size="sm" className="hidden sm:inline-flex" render={<Link href="/contact" />}>
             Hubungi Saya
           </Button>
         </div>

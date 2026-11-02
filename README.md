@@ -96,13 +96,13 @@ scripts/
 | --- | --- |
 | 1. Project Initialization | ✅ selesai |
 | 2. Database & ORM Setup | ✅ selesai |
-| 3. Authentication & Authorization | ⏳ berikutnya |
-| 4. Admin Dashboard Layout | ⬜ |
-| 5. Category Management | ⬜ |
-| 6. Project Management | ⬜ |
-| 7. Public Portfolio Website | ⬜ |
+| 3. Authentication & Authorization | ✅ selesai |
+| 4. Admin Dashboard Layout | ✅ selesai |
+| 5. Category Management | ✅ selesai |
+| 6. Project Management | 🟡 API tersedia (perlu perbaikan), UI admin belum |
+| 7. Public Portfolio Website | 🟡 halaman utama selesai; pengiriman kontak menunggu API |
 | 8. Content Management | ⬜ |
-| 9. Contact & Website Settings | ⬜ |
+| 9. Contact & Website Settings | 🟡 UI kontak selesai; inbox & settings belum |
 | 10. Testing & Deployment | ⬜ |
 
 ## Catatan Produksi

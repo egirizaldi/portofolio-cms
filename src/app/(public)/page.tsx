@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
 import { prisma } from "@/lib/db";
-import { Badge } from "@/components/ui/badge";
+import { ProjectCard } from "@/components/public/project-card";
 import { Button } from "@/components/ui/button";
 
 // Konten berasal dari database CMS, selalu render saat request.
@@ -20,6 +20,11 @@ export default async function HomePage() {
         title: true,
         slug: true,
         shortDescription: true,
+        thumbnail: true,
+        technologies: true,
+        projectDate: true,
+        createdAt: true,
+        isFeatured: true,
         categories: { select: { id: true, name: true } },
       },
     }),
@@ -61,27 +66,9 @@ export default async function HomePage() {
             Belum ada proyek yang dipublikasikan.
           </p>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {featuredProjects.map((project) => (
-              <Link
-                key={project.id}
-                href={`/projects/${project.slug}`}
-                className="group rounded-xl border p-5 transition-colors hover:bg-muted/50"
-              >
-                <h3 className="font-medium group-hover:underline">
-                  {project.title}
-                </h3>
-                <p className="mt-2 line-clamp-3 text-sm text-muted-foreground">
-                  {project.shortDescription}
-                </p>
-                <div className="mt-4 flex flex-wrap gap-1.5">
-                  {project.categories.map((category) => (
-                    <Badge key={category.id} variant="secondary">
-                      {category.name}
-                    </Badge>
-                  ))}
-                </div>
-              </Link>
+              <ProjectCard key={project.id} project={project} />
             ))}
           </div>
         )}
