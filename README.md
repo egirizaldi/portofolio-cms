@@ -37,8 +37,8 @@ npm run dev
 
 Buka http://localhost:3000
 
-Kredensial admin awal berasal dari `ADMIN_EMAIL` / `ADMIN_PASSWORD` di `.env`
-(default: `admin@portofolio.local` / `Admin#12345`).
+Kredensial admin awal disetel via `ADMIN_EMAIL` dan `ADMIN_PASSWORD` di `.env`
+(default pada `.env.example`: `admin@portofolio.local` / `Admin#12345`).
 
 ## Scripts
 
@@ -46,39 +46,45 @@ Kredensial admin awal berasal dari `ADMIN_EMAIL` / `ADMIN_PASSWORD` di `.env`
 | --- | --- |
 | `npm run dev` | Development server |
 | `npm run build` | Prisma generate + build produksi |
+| `npm run start` | Menjalankan build produksi |
 | `npm run typecheck` | Cek tipe TypeScript |
 | `npm run lint` | ESLint |
 | `npm run db:start` | Jalankan PostgreSQL embedded (port 54329) |
 | `npm run db:migrate` | Buat/terapkan migration Prisma |
+| `npm run db:push` | Push schema langsung ke database tanpa migration |
 | `npm run db:seed` | Isi data awal (idempotent) |
-| `npm run db:studio` | Prisma Studio |
+| `npm run db:generate` | Generate Prisma Client |
+| `npm run db:studio` | Buka Prisma Studio |
 
 ## Struktur Folder
 
 ```
 src/
+├── actions/                # Server Actions (Auth, dll.)
 ├── app/
-│   ├── (public)/           # halaman pengunjung
-│   ├── admin/              # dashboard CMS (login di /admin/login)
-│   └── api/                # route handlers bila diperlukan
+│   ├── (public)/           # Halaman publik (Home, Projects, About, Skills, Experience, Education, Certificate, Contact)
+│   ├── admin/              # Dashboard CMS privat (login di /admin/login)
+│   ├── api/                # Route Handlers REST API (CRUD konten, pesan, upload, stats)
+│   ├── layout.tsx          # Root layout & providers
+│   ├── robots.ts           # SEO Robots konfigurasi
+│   └── sitemap.ts          # SEO Sitemap dinamis
 ├── components/
-│   ├── ui/                 # komponen shadcn/ui
-│   ├── public/             # komponen khusus halaman publik
-│   └── admin/              # komponen khusus dashboard
+│   ├── admin/              # Komponen dashboard & dialog form CRUD
+│   ├── auth/               # Komponen otentikasi & login form
+│   ├── public/             # Komponen khusus halaman publik
+│   └── ui/                 # Komponen UI dasar shadcn/ui
 ├── lib/
-│   ├── db/                 # Prisma client
-│   ├── auth/               # konfigurasi Auth.js
-│   ├── validations/        # schema Zod
-│   └── utils.ts            # helper umum (cn, dll.)
-├── actions/                # Server Actions
-├── hooks/                  # custom hooks
-└── types/                  # tipe bersama
+│   ├── auth/               # Konfigurasi NextAuth / Auth.js
+│   ├── db/                 # Prisma client instance
+│   ├── validations/        # Schema validasi Zod
+│   └── utils.ts            # Helper umum (cn, image src resolver, dll.)
+└── types/                  # Definisi TypeScript bersama
 prisma/
-├── schema.prisma
-├── migrations/
-└── seed.ts
+├── schema.prisma           # Skema database Prisma
+├── migrations/             # Riwayat migrasi database
+└── seed.ts                 # Script seeding data awal
 scripts/
-└── db.ts                   # runner embedded PostgreSQL
+└── db.ts                   # Runner embedded PostgreSQL
 ```
 
 ## Model Data
@@ -92,18 +98,18 @@ scripts/
 
 ## Status Pengerjaan
 
-| Fase | Status |
-| --- | --- |
-| 1. Project Initialization | ✅ selesai |
-| 2. Database & ORM Setup | ✅ selesai |
-| 3. Authentication & Authorization | ✅ selesai |
-| 4. Admin Dashboard Layout | ✅ selesai |
-| 5. Category Management | ✅ selesai |
-| 6. Project Management | 🟡 API tersedia (perlu perbaikan), UI admin belum |
-| 7. Public Portfolio Website | 🟡 halaman utama selesai; pengiriman kontak menunggu API |
-| 8. Content Management | ⬜ |
-| 9. Contact & Website Settings | 🟡 UI kontak selesai; inbox & settings belum |
-| 10. Testing & Deployment | ⬜ |
+| Fase | Status | Keterangan |
+| --- | --- | --- |
+| 1. Project Initialization | ✅ Selesai | Next.js 16, TypeScript, Tailwind CSS v4, shadcn/ui |
+| 2. Database & ORM Setup | ✅ Selesai | Embedded PostgreSQL & Prisma ORM lengkap dengan relasi dan seed |
+| 3. Authentication & Authorization | ✅ Selesai | Auth.js v5 credentials flow, role-based protection, middleware guard |
+| 4. Admin Dashboard Layout | ✅ Selesai | Layout responsive, sidebar navigasi, header status, tema dark/light |
+| 5. Category Management | ✅ Selesai | CRUD Kategori project dengan modal form Zod & feedback notifikasi |
+| 6. Project Management | ✅ Selesai | CRUD Proyek lengkap (upload thumbnail/galeri, slug otomatis, toggle publish/featured) |
+| 7. Public Portfolio Website | ✅ Selesai | Halaman publik lengkap: Home, Projects, About, Skills, Experience, Education, Certificate, Kontak |
+| 8. Content Management | ✅ Selesai | CMS Dashboard untuk Profile, Skills, Experience, Education, dan Sertifikat |
+| 9. Contact & Website Settings | ✅ Selesai | Inbox pesan (/admin/messages) dengan filter unread & Settings website umum |
+| 10. Testing & Optimization | ✅ Selesai | Validasi form, rate limiting API, SEO (robots.ts & sitemap.ts), typecheck aman |
 
 ## Catatan Produksi
 
