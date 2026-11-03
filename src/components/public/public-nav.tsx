@@ -17,7 +17,9 @@ import { cn } from "@/lib/utils";
 const links = [
   { href: "/about", label: "About" },
   { href: "/projects", label: "Projects" },
+  { href: "/skills", label: "Skills" },
   { href: "/experience", label: "Experience" },
+  { href: "/education", label: "Education" },
   { href: "/certificates", label: "Certificates" },
   { href: "/contact", label: "Contact" },
 ];
@@ -32,7 +34,7 @@ export function PublicNav() {
 
   return (
     <>
-      <nav className="hidden items-center gap-1 sm:flex">
+      <nav className="hidden items-center gap-1 lg:flex">
         {links.map((link) => (
           <Button
             key={link.href}
@@ -47,7 +49,7 @@ export function PublicNav() {
         ))}
       </nav>
 
-      <div className="flex items-center gap-2 sm:hidden">
+      <div className="flex items-center gap-2 lg:hidden">
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger
             render={

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 import { requireAdmin } from "@/lib/auth/guards";
-import { experienceSchema } from "@/lib/validations/experience";
+import { experienceBaseSchema, experienceSchema } from "@/lib/validations/experience";
 
 /**
  * GET /api/experiences/:id
@@ -44,7 +44,7 @@ export async function PUT(
   }
 
   const json = await request.json();
-  const partialSchema = experienceSchema.partial();
+  const partialSchema = experienceBaseSchema.partial();
   const result = partialSchema.safeParse(json);
   if (!result.success) {
     return NextResponse.json(

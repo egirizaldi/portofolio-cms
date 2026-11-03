@@ -34,7 +34,13 @@ const navigation = [
   { href: "/admin/settings", label: "Pengaturan", icon: Settings },
 ];
 
-function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
+function NavLinks({
+  onNavigate,
+  unreadCount = 0,
+}: {
+  onNavigate?: () => void;
+  unreadCount?: number;
+}) {
   const pathname = usePathname();
 
   return (
@@ -55,6 +61,11 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
           >
             <item.icon className="size-4 shrink-0" />
             {item.label}
+            {item.href === "/admin/messages" && unreadCount > 0 ? (
+              <span className="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1.5 text-[10px] font-semibold text-white">
+                {unreadCount > 99 ? "99+" : unreadCount}
+              </span>
+            ) : null}
           </Link>
         );
       })}
@@ -76,17 +87,17 @@ function Brand() {
 }
 
 /** Sidebar tetap untuk layar besar. */
-export function AdminSidebar() {
+export function AdminSidebar({ unreadCount = 0 }: { unreadCount?: number }) {
   return (
     <aside className="hidden w-64 shrink-0 border-r bg-background lg:block">
       <Brand />
-      <NavLinks />
+      <NavLinks unreadCount={unreadCount} />
     </aside>
   );
 }
 
 /** Trigger + drawer untuk layar kecil. */
-export function AdminMobileNav() {
+export function AdminMobileNav({ unreadCount = 0 }: { unreadCount?: number }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -106,7 +117,10 @@ export function AdminMobileNav() {
       <SheetContent side="left" className="w-64 p-0">
         <SheetTitle className="sr-only">Navigasi admin</SheetTitle>
         <Brand />
-        <NavLinks onNavigate={() => setOpen(false)} />
+        <NavLinks
+          unreadCount={unreadCount}
+          onNavigate={() => setOpen(false)}
+        />
       </SheetContent>
     </Sheet>
   );

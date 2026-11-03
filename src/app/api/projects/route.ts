@@ -70,12 +70,32 @@ export async function POST(request: Request) {
   const created = await prisma.project.create({
     data: {
       ...projectData,
+      demoUrl: projectData.demoUrl || null,
+      githubUrl: projectData.githubUrl || null,
+      projectDate: projectData.projectDate
+        ? new Date(projectData.projectDate)
+        : null,
       categories: {
         connect: categoryIds.map((id) => ({ id })),
       },
     },
     include: { categories: true },
+  }).catch((error) => {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      return null;
+    }
+    throw error;
   });
+
+  if (!created) {
+    return NextResponse.json(
+      { error: "Slug sudah dipakai proyek lain. Gunakan slug berbeda." },
+      { status: 409 },
+    );
+  }
 
   return NextResponse.json(created, { status: 201 });
 }

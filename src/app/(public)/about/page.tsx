@@ -34,21 +34,25 @@ function initials(name: string) {
 }
 
 export default async function AboutPage() {
-  const [profile, skills, experiences, educations] = await Promise.all([
-    prisma.profile.findFirst(),
-    prisma.skill.findMany({
-      where: { isActive: true },
-      orderBy: [{ displayOrder: "asc" }, { name: "asc" }],
-    }),
-    prisma.experience.findMany({
-      orderBy: [{ displayOrder: "asc" }, { startDate: "desc" }],
-      take: 4,
-    }),
-    prisma.education.findMany({
-      orderBy: [{ displayOrder: "asc" }, { startDate: "desc" }],
-      take: 3,
-    }),
-  ]);
+  const [profile, skills, experiences, educations, cvSetting] =
+    await Promise.all([
+      prisma.profile.findFirst(),
+      prisma.skill.findMany({
+        where: { isActive: true },
+        orderBy: [{ displayOrder: "asc" }, { name: "asc" }],
+      }),
+      prisma.experience.findMany({
+        orderBy: [{ displayOrder: "asc" }, { startDate: "desc" }],
+        take: 4,
+      }),
+      prisma.education.findMany({
+        orderBy: [{ displayOrder: "asc" }, { startDate: "desc" }],
+        take: 3,
+      }),
+      prisma.setting.findUnique({ where: { key: "show_cv_download" } }),
+    ]);
+
+  const showCvDownload = cvSetting?.value !== "false";
 
   const profileImage = resolveImageSrc(profile?.profileImage);
   const name = profile?.fullName ?? "Nama Lengkap";
@@ -156,7 +160,7 @@ export default async function AboutPage() {
               Lihat proyek
               <ArrowRight aria-hidden />
             </Button>
-            {profile?.cvFile ? (
+            {profile?.cvFile && showCvDownload ? (
               <Button
                 variant="outline"
                 render={

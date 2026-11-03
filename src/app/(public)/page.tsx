@@ -1,3 +1,5 @@
+import { cache } from "react";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
@@ -8,9 +10,27 @@ import { Button } from "@/components/ui/button";
 // Konten berasal dari database CMS, selalu render saat request.
 export const dynamic = "force-dynamic";
 
+const getProfile = cache(() => prisma.profile.findFirst());
+
+export async function generateMetadata(): Promise<Metadata> {
+  const profile = await getProfile();
+  const description =
+    profile?.headline?.trim() ||
+    "Portofolio pribadi, proyek pilihan, dan pengalaman profesional.";
+
+  return {
+    description,
+    openGraph: {
+      title: profile?.fullName ?? "Personal Portfolio",
+      description,
+      type: "website",
+    },
+  };
+}
+
 export default async function HomePage() {
   const [profile, featuredProjects] = await Promise.all([
-    prisma.profile.findFirst(),
+    getProfile(),
     prisma.project.findMany({
       where: { status: "PUBLISHED" },
       orderBy: [{ isFeatured: "desc" }, { createdAt: "desc" }],

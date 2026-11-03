@@ -16,6 +16,11 @@ export const metadata: Metadata = {
   title: "Proyek",
   description:
     "Kumpulan proyek yang telah saya kerjakan, lengkap dengan teknologi dan studi kasusnya.",
+  openGraph: {
+    title: "Proyek",
+    description:
+      "Kumpulan proyek yang telah saya kerjakan, lengkap dengan teknologi dan studi kasusnya.",
+  },
 };
 
 const PAGE_SIZE = 9;

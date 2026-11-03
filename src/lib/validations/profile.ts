@@ -31,6 +31,20 @@ export const profileSchema = z.object({
     .optional()
     .nullable()
     .or(z.literal("")),
+  profileImage: z
+    .string()
+    .trim()
+    .max(500, { error: "Path foto maksimal 500 karakter." })
+    .optional()
+    .nullable()
+    .or(z.literal("")),
+  cvFile: z
+    .string()
+    .trim()
+    .max(500, { error: "Path CV maksimal 500 karakter." })
+    .optional()
+    .nullable()
+    .or(z.literal("")),
   contactEmail: z
     .union([z.string().email({ error: "Format email tidak valid." }), z.literal("")])
     .optional()

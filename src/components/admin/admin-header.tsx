@@ -9,6 +9,7 @@ import { AdminMobileNav } from "@/components/admin/admin-sidebar";
 type AdminHeaderProps = {
   name: string;
   email: string;
+  unreadCount?: number;
 };
 
 function initials(name: string) {
@@ -20,10 +21,10 @@ function initials(name: string) {
     .join("");
 }
 
-export function AdminHeader({ name, email }: AdminHeaderProps) {
+export function AdminHeader({ name, email, unreadCount = 0 }: AdminHeaderProps) {
   return (
     <header className="sticky top-0 z-10 flex h-14 items-center gap-3 border-b bg-background/95 px-4 backdrop-blur md:px-6">
-      <AdminMobileNav />
+      <AdminMobileNav unreadCount={unreadCount} />
 
       <div className="ml-auto flex items-center gap-2">
         <Button

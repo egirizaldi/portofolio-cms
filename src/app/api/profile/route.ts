@@ -35,6 +35,8 @@ export async function PUT(request: Request) {
     headline: data.headline || null,
     profession: data.profession || null,
     bio: data.bio || null,
+    profileImage: data.profileImage || null,
+    cvFile: data.cvFile || null,
     contactEmail: data.contactEmail || null,
     location: data.location || null,
     githubUrl: data.githubUrl || null,

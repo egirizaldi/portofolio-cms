@@ -1,5 +1,6 @@
 // API routes untuk Project (detail, update, delete)
 import { NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
 import { projectSchema } from "@/lib/validations/project";
 import { requireAdmin } from "@/lib/auth/guards";
@@ -41,6 +42,17 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     where: { id },
     data: {
       ...projectData,
+      ...(projectData.demoUrl !== undefined && {
+        demoUrl: projectData.demoUrl || null,
+      }),
+      ...(projectData.githubUrl !== undefined && {
+        githubUrl: projectData.githubUrl || null,
+      }),
+      ...(projectData.projectDate !== undefined && {
+        projectDate: projectData.projectDate
+          ? new Date(projectData.projectDate)
+          : null,
+      }),
       ...(categoryIds && {
         categories: {
           set: categoryIds.map((cid) => ({ id: cid })),
@@ -48,7 +60,23 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       }),
     },
     include: { categories: true },
+  }).catch((error) => {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      return null;
+    }
+    throw error;
   });
+
+  if (!updated) {
+    return NextResponse.json(
+      { error: "Slug sudah dipakai proyek lain. Gunakan slug berbeda." },
+      { status: 409 },
+    );
+  }
+
   return NextResponse.json(updated);
 }
 

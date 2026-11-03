@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 
 import { prisma } from "@/lib/db";
+import { DashboardCharts } from "@/components/admin/dashboard-charts";
 import { StatCard } from "@/components/admin/stat-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -38,6 +39,8 @@ export default async function DashboardPage() {
     skillCount,
     certificateCount,
     unreadMessages,
+    readMessages,
+    archivedMessages,
     totalMessages,
     latestMessages,
     latestProjects,
@@ -48,6 +51,8 @@ export default async function DashboardPage() {
     prisma.skill.count(),
     prisma.certificate.count(),
     prisma.message.count({ where: { status: "UNREAD" } }),
+    prisma.message.count({ where: { status: "READ" } }),
+    prisma.message.count({ where: { status: "ARCHIVED" } }),
     prisma.message.count(),
     prisma.message.findMany({
       orderBy: { createdAt: "desc" },
@@ -105,6 +110,15 @@ export default async function DashboardPage() {
           hint={`${totalMessages} total pesan`}
         />
       </div>
+
+      <DashboardCharts
+        projects={{ published: publishedProjects, draft: draftProjects }}
+        messages={{
+          unread: unreadMessages,
+          read: readMessages,
+          archived: archivedMessages,
+        }}
+      />
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
