@@ -10,7 +10,14 @@ import { Button } from "@/components/ui/button";
 // Konten berasal dari database CMS, selalu render saat request.
 export const dynamic = "force-dynamic";
 
-const getProfile = cache(() => prisma.profile.findFirst());
+const getProfile = cache(async () => {
+  try {
+    return await prisma.profile.findFirst();
+  } catch (error) {
+    console.error("Gagal membaca profil dari database:", error);
+    return null;
+  }
+});
 
 export async function generateMetadata(): Promise<Metadata> {
   const profile = await getProfile();
@@ -29,9 +36,10 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage() {
-  const [profile, featuredProjects] = await Promise.all([
-    getProfile(),
-    prisma.project.findMany({
+  const profile = await getProfile();
+  let featuredProjects: any[] = [];
+  try {
+    featuredProjects = await prisma.project.findMany({
       where: { status: "PUBLISHED" },
       orderBy: [{ isFeatured: "desc" }, { createdAt: "desc" }],
       take: 3,
@@ -47,8 +55,10 @@ export default async function HomePage() {
         isFeatured: true,
         categories: { select: { id: true, name: true } },
       },
-    }),
-  ]);
+    });
+  } catch (error) {
+    console.error("Gagal membaca project dari database:", error);
+  }
 
   return (
     <div>

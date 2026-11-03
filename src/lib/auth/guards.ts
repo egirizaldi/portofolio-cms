@@ -13,6 +13,9 @@ export async function getSession(): Promise<Session | null> {
  * Server tetap jadi sumber kebenaran — menyembunyikan tombol di UI bukan pengamanan.
  */
 export async function requireAdmin(): Promise<Session> {
+  if (process.env.CMS_ENABLED !== "true") {
+    redirect("/");
+  }
   const session = await auth();
   if (!session?.user) {
     redirect("/admin/login");
