@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 import { projectSchema } from "@/lib/validations/project";
 import { requireAdmin } from "@/lib/auth/guards";
+import { auth } from "@/lib/auth";
 import { Prisma } from "@prisma/client";
 
 /**
@@ -13,6 +14,15 @@ import { Prisma } from "@prisma/client";
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const isPublic = url.searchParams.get("public") === "true" || url.searchParams.get("status") === "PUBLISHED";
+
+  // Daftar lengkap (termasuk draft) hanya untuk admin. Tanpa login, endpoint
+  // ini mengembalikan 401 agar proyek yang belum dipublikasikan tidak bocor.
+  if (!isPublic) {
+    const session = await auth();
+    if (process.env.CMS_ENABLED !== "true" || !session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+  }
 
   // Pagination & validation
   const page = Math.max(parseInt(url.searchParams.get("page") ?? "1"), 1);

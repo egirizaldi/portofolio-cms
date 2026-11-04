@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
 import { prisma } from "@/lib/db";
-import { ProjectCard } from "@/components/public/project-card";
+import { ProjectCard, type ProjectCardData } from "@/components/public/project-card";
 import { Button } from "@/components/ui/button";
 
 // Konten berasal dari database CMS, selalu render saat request.
@@ -37,7 +37,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function HomePage() {
   const profile = await getProfile();
-  let featuredProjects: any[] = [];
+  let featuredProjects: ProjectCardData[] = [];
   try {
     featuredProjects = await prisma.project.findMany({
       where: { status: "PUBLISHED" },

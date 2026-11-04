@@ -50,7 +50,8 @@ Kredensial admin awal disetel via `ADMIN_EMAIL` dan `ADMIN_PASSWORD` di `.env`
 | `npm run typecheck` | Cek tipe TypeScript |
 | `npm run lint` | ESLint |
 | `npm run db:start` | Jalankan PostgreSQL embedded (port 54329) |
-| `npm run db:migrate` | Buat/terapkan migration Prisma |
+| `npm run db:migrate` | Buat/terapkan migration Prisma (development) |
+| `npm run db:deploy` | Terapkan migration ke database produksi (`prisma migrate deploy`) |
 | `npm run db:push` | Push schema langsung ke database tanpa migration |
 | `npm run db:seed` | Isi data awal (idempotent) |
 | `npm run db:generate` | Generate Prisma Client |
@@ -105,15 +106,111 @@ scripts/
 | 3. Authentication & Authorization | ✅ Selesai | Auth.js v5 credentials flow, role-based protection, middleware guard |
 | 4. Admin Dashboard Layout | ✅ Selesai | Layout responsive, sidebar navigasi, header status, tema dark/light |
 | 5. Category Management | ✅ Selesai | CRUD Kategori project dengan modal form Zod & feedback notifikasi |
-| 6. Project Management | ✅ Selesai | CRUD Proyek lengkap (upload thumbnail/galeri, slug otomatis, toggle publish/featured) |
+| 6. Project Management | ✅ Selesai | CRUD Proyek lengkap (thumbnail via URL/path, slug otomatis, toggle publish/featured) |
 | 7. Public Portfolio Website | ✅ Selesai | Halaman publik lengkap: Home, Projects, About, Skills, Experience, Education, Certificate, Kontak |
 | 8. Content Management | ✅ Selesai | CMS Dashboard untuk Profile, Skills, Experience, Education, dan Sertifikat |
 | 9. Contact & Website Settings | ✅ Selesai | Inbox pesan (/admin/messages) dengan filter unread & Settings website umum |
 | 10. Testing & Optimization | ✅ Selesai | Validasi form, rate limiting API, SEO (robots.ts & sitemap.ts), typecheck aman |
 
-## Catatan Produksi
+## Deploy: Website di Vercel + CMS di Laptop
 
-- `embedded-postgres` hanya untuk development. Untuk produksi gunakan PostgreSQL
-  terkelola (Neon/Supabase/RDS) dan set `DATABASE_URL` sesuai.
-- Upload file di development disimpan di `public/uploads/`; untuk produksi gunakan
-  object storage (mis. S3/R2) sesuai PRD bagian 8.
+Arsitektur ini memisahkan tempat menjalankan aplikasi, bukan aplikasinya:
+
+- **Website publik** berjalan di Vercel.
+- **Dashboard CMS** hanya dijalankan di laptop (`CMS_ENABLED=true`).
+- Keduanya memakai **database PostgreSQL hosted yang sama**.
+- Di Vercel, `CMS_ENABLED` sengaja **tidak diisi** sehingga `/admin` mati.
+- Perubahan dari CMS lokal langsung tampil di website karena halaman publik
+  memakai `force-dynamic`.
+
+### 1. Siapkan database hosted
+
+Gunakan Supabase, Neon, atau PostgreSQL terkelola lainnya. Ambil dua connection
+string:
+
+- `DATABASE_URL` — koneksi **pooler** (untuk aplikasi/serverless).
+- `DIRECT_URL` — koneksi **langsung** (untuk migrasi Prisma).
+
+Contoh Supabase:
+
+```env
+DATABASE_URL="postgresql://postgres.<ref>:<password>@aws-0-<region>.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1"
+DIRECT_URL="postgresql://postgres.<ref>:<password>@aws-0-<region>.pooler.supabase.com:5432/postgres"
+```
+
+Contoh Neon:
+
+```env
+DATABASE_URL="postgresql://<user>:<password>@<project>-pooler.<region>.neon.tech/<db>?sslmode=require"
+DIRECT_URL="postgresql://<user>:<password>@<project>.<region>.neon.tech/<db>?sslmode=require"
+```
+
+> Jika koneksi langsung Supabase tidak bisa dipakai karena IPv6, gunakan
+> **session pooler** (port `5432`) sebagai `DIRECT_URL`.
+
+### 2. Environment di Vercel
+
+Isi di Project Settings → Environment Variables:
+
+```env
+DATABASE_URL="..."
+DIRECT_URL="..."
+AUTH_SECRET="..."          # openssl rand -base64 32
+AUTH_TRUST_HOST=true
+NEXT_PUBLIC_SITE_URL="https://domain-anda.com"
+```
+
+**Jangan isi `CMS_ENABLED` di Vercel.** Tanpa variabel itu, middleware dan
+`requireAdmin` menonaktifkan seluruh dashboard admin di hosting.
+`ADMIN_EMAIL` dan `ADMIN_PASSWORD` hanya dibutuhkan saat menjalankan seed dari
+laptop, jadi tidak perlu ditaruh di Vercel.
+
+### 3. Environment di laptop
+
+Salin `.env.example` lalu isi dengan database hosted yang sama:
+
+```env
+DATABASE_URL="..."
+DIRECT_URL="..."
+AUTH_SECRET="..."
+AUTH_TRUST_HOST=true
+NEXT_PUBLIC_SITE_URL="https://domain-anda.com"
+ADMIN_EMAIL="admin@portofolio.local"
+ADMIN_PASSWORD="..."
+CMS_ENABLED="true"
+```
+
+Lalu jalankan `npm run dev` — **tanpa** `npm run db:start`, karena database
+sudah berjalan di hosting.
+
+### 4. Migrasi & seed (sekali saja)
+
+Dari laptop, arahkan ke database hosted:
+
+```bash
+npm run db:deploy   # prisma migrate deploy
+npm run db:seed
+```
+
+Jangan memakai `npm run db:migrate` (`prisma migrate dev`) untuk database
+produksi karena perintah itu bisa membuat migration baru dan melakukan reset.
+
+### 5. Verifikasi
+
+1. Buka website Vercel → konten tampil.
+2. Buka `http://localhost:3000/admin` di laptop → login berhasil.
+3. Ubah konten → refresh website Vercel → perubahan muncul.
+4. Buka `https://domain-anda.com/admin` → dialihkan ke homepage (CMS mati).
+
+### Catatan penting
+
+- `NEXT_PUBLIC_SITE_URL` di-inline saat build Vercel. Jika domain berubah,
+  lakukan redeploy.
+- Ganti `ADMIN_PASSWORD` setelah seed **tidak** mengubah password yang sudah ada;
+  seed hanya membuat user baru.
+- CMS lokal tetap membutuhkan koneksi internet ke database hosted.
+- **Upload gambar dari CMS belum tersedia.** Untuk sementara, isi field gambar
+  dengan URL publik dari hosting gambar (mis. Cloudinary/Imgur). Integrasi
+  Supabase Storage direncanakan pada fase berikutnya.
+- `embedded-postgres` hanya untuk development lokal, bukan untuk produksi.
+- Jangan commit `.env` asli. Gunakan `.env.example` sebagai template.

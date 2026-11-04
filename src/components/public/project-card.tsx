@@ -8,6 +8,7 @@ import { resolveImageSrc } from "@/lib/media";
 import { cn } from "@/lib/utils";
 
 export type ProjectCardData = {
+  id: string;
   title: string;
   slug: string;
   shortDescription: string;

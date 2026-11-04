@@ -7,8 +7,12 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  // Koneksi langsung (tanpa pooler) untuk migrasi/introspeksi Prisma.
+  // Di Supabase/Neon, DATABASE_URL memakai pooler dan DIRECT_URL memakai
+  // koneksi langsung. Untuk database lokal, isi keduanya dengan URL yang sama.
+  directUrl = env("DIRECT_URL")
 }
 
 enum ProjectStatus {
