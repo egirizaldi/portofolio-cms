@@ -15,6 +15,23 @@ import {
 } from "@/lib/validations/upload";
 
 /**
+ * GET /api/upload
+ * Memberi tahu klien mode penyimpanan yang aktif:
+ * - "supabase" jika env Supabase lengkap.
+ * - "local"    jika belum (fallback ke `public/uploads/`).
+ */
+export async function GET() {
+  const session = await auth();
+  if (process.env.CMS_ENABLED !== "true" || !session?.user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  return NextResponse.json({
+    mode: isStorageConfigured() ? "supabase" : "local",
+  });
+}
+
+/**
  * POST /api/upload
  * Membuat signed upload URL Supabase agar browser bisa mengunggah file
  * langsung ke Storage (melewati batas body 4.5 MB Vercel).

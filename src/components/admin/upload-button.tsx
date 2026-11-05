@@ -70,6 +70,43 @@ export function UploadButton({
 
     setUploading(true);
     try {
+      // Tentukan mode penyimpanan: Supabase (jika dikonfigurasi) atau lokal.
+      const modeResponse = await fetch("/api/upload", { cache: "no-store" });
+      const modePayload = await readJson(modeResponse);
+
+      if (!modeResponse.ok) {
+        toast.error("Gagal mengunggah berkas", {
+          description: getApiErrorMessage(modePayload),
+        });
+        return;
+      }
+
+      const mode = (modePayload as { mode?: string }).mode;
+
+      if (mode === "local") {
+        const body = new FormData();
+        body.append("type", type);
+        body.append("file", file);
+
+        const response = await fetch("/api/upload/local", {
+          method: "POST",
+          body,
+        });
+        const payload = await readJson(response);
+
+        if (!response.ok) {
+          toast.error("Gagal mengunggah berkas", {
+            description: getApiErrorMessage(payload),
+          });
+          return;
+        }
+
+        const { publicUrl } = payload as { publicUrl: string };
+        onUploaded(publicUrl);
+        toast.success("Berkas berhasil diunggah.");
+        return;
+      }
+
       const response = await fetch("/api/upload", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

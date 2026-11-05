@@ -226,8 +226,10 @@ SUPABASE_SERVICE_ROLE_KEY="..."
 SUPABASE_STORAGE_BUCKET="portfolio"
 ```
 
-Tanpa variabel ini, tombol upload akan menampilkan pesan bahwa Storage belum
-dikonfigurasi, dan field URL/path manual tetap bisa dipakai.
+Tanpa variabel ini, tombol upload otomatis memakai **penyimpanan lokal**
+(`public/uploads/`) agar CMS tetap bisa dipakai saat development. Mode lokal
+hanya untuk laptop: gambar tidak akan ikut ter-deploy ke Vercel, jadi Supabase
+tetap diperlukan sebelum website publik memakai gambar hasil upload.
 
 > Vercel **tidak** memerlukan variabel Supabase untuk menampilkan gambar, karena
 > halaman publik menyimpan URL absolut. Jangan menaruh service role key di
