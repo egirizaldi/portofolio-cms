@@ -208,22 +208,24 @@ Upload dari CMS memakai **signed upload URL**: server membuat izin upload, lalu
 browser mengirim file langsung ke Supabase Storage. Dengan begitu file tidak
 melewati Vercel sehingga batas body 4,5 MB tidak menjadi masalah.
 
-1. Buat project Supabase, lalu buat bucket bernama `portfolio`.
+1. Buat project Supabase, lalu buat bucket. Nama bebas, tetapi harus sama
+   dengan `SUPABASE_STORAGE_BUCKET` (contoh yang dipakai project ini:
+   `portofolio`; default kode: `portfolio`).
 2. Atur bucket: **Public bucket** (agar gambar bisa dibaca publik), batas
    ukuran 10 MB, dan allowed MIME types:
    `image/jpeg, image/png, image/webp, image/gif, application/pdf`.
 3. Ambil dari Project Settings → API:
    - Project URL → `NEXT_PUBLIC_SUPABASE_URL`
-   - anon/public key → `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - service_role key → `SUPABASE_SERVICE_ROLE_KEY` (rahasia, server-only)
+   - anon/publishable key → `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - service_role/secret key → `SUPABASE_SERVICE_ROLE_KEY` (rahasia, server-only)
 4. Isi keempat variabel tersebut di `.env` **laptop** (tempat CMS berjalan).
-   Bucket bisa diganti lewat `SUPABASE_STORAGE_BUCKET` (default `portfolio`).
+   Samakan `SUPABASE_STORAGE_BUCKET` dengan nama bucket yang dibuat.
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL="https://xxxx.supabase.co"
 NEXT_PUBLIC_SUPABASE_ANON_KEY="..."
 SUPABASE_SERVICE_ROLE_KEY="..."
-SUPABASE_STORAGE_BUCKET="portfolio"
+SUPABASE_STORAGE_BUCKET="portofolio"
 ```
 
 Tanpa variabel ini, tombol upload otomatis memakai **penyimpanan lokal**
