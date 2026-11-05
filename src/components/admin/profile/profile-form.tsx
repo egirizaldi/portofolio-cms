@@ -18,6 +18,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { UploadButton } from "@/components/admin/upload-button";
 import {
   getApiErrorMessage,
   getNetworkErrorMessage,
@@ -54,6 +55,7 @@ export function ProfileForm({ profile }: ProfileFormProps) {
     register,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<ProfileFormValues, unknown, ProfileFormOutput>({
     resolver: zodResolver(profileSchema),
@@ -180,19 +182,29 @@ export function ProfileForm({ profile }: ProfileFormProps) {
         <CardHeader>
           <CardTitle>Foto &amp; CV</CardTitle>
           <CardDescription>
-            Upload berkas akan tersedia menyusul. Untuk sekarang isi path atau URL
-            berkas.
+            Unggah berkas langsung ke penyimpanan, atau isi path/URL manual.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-6 sm:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="profileImage">Foto Profil</Label>
-            <Input
-              id="profileImage"
-              {...register("profileImage")}
-              placeholder="/uploads/profile.jpg"
-              aria-invalid={Boolean(errors.profileImage)}
-            />
+            <div className="flex gap-2">
+              <Input
+                id="profileImage"
+                {...register("profileImage")}
+                placeholder="/uploads/profile.jpg"
+                aria-invalid={Boolean(errors.profileImage)}
+              />
+              <UploadButton
+                type="profile"
+                onUploaded={(url) =>
+                  setValue("profileImage", url, {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  })
+                }
+              />
+            </div>
             {errors.profileImage ? (
               <p className="text-xs text-destructive">
                 {errors.profileImage.message}
@@ -217,12 +229,23 @@ export function ProfileForm({ profile }: ProfileFormProps) {
 
           <div className="space-y-2">
             <Label htmlFor="cvFile">Berkas CV</Label>
-            <Input
-              id="cvFile"
-              {...register("cvFile")}
-              placeholder="/uploads/cv.pdf"
-              aria-invalid={Boolean(errors.cvFile)}
-            />
+            <div className="flex gap-2">
+              <Input
+                id="cvFile"
+                {...register("cvFile")}
+                placeholder="/uploads/cv.pdf"
+                aria-invalid={Boolean(errors.cvFile)}
+              />
+              <UploadButton
+                type="cv"
+                onUploaded={(url) =>
+                  setValue("cvFile", url, {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  })
+                }
+              />
+            </div>
             {errors.cvFile ? (
               <p className="text-xs text-destructive">
                 {errors.cvFile.message}

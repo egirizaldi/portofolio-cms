@@ -106,7 +106,7 @@ scripts/
 | 3. Authentication & Authorization | ✅ Selesai | Auth.js v5 credentials flow, role-based protection, middleware guard |
 | 4. Admin Dashboard Layout | ✅ Selesai | Layout responsive, sidebar navigasi, header status, tema dark/light |
 | 5. Category Management | ✅ Selesai | CRUD Kategori project dengan modal form Zod & feedback notifikasi |
-| 6. Project Management | ✅ Selesai | CRUD Proyek lengkap (thumbnail via URL/path, slug otomatis, toggle publish/featured) |
+| 6. Project Management | ✅ Selesai | CRUD Proyek lengkap (upload thumbnail ke Supabase Storage, slug otomatis, toggle publish/featured) |
 | 7. Public Portfolio Website | ✅ Selesai | Halaman publik lengkap: Home, Projects, About, Skills, Experience, Education, Certificate, Kontak |
 | 8. Content Management | ✅ Selesai | CMS Dashboard untuk Profile, Skills, Experience, Education, dan Sertifikat |
 | 9. Contact & Website Settings | ✅ Selesai | Inbox pesan (/admin/messages) dengan filter unread & Settings website umum |
@@ -202,6 +202,37 @@ produksi karena perintah itu bisa membuat migration baru dan melakukan reset.
 3. Ubah konten → refresh website Vercel → perubahan muncul.
 4. Buka `https://domain-anda.com/admin` → dialihkan ke homepage (CMS mati).
 
+### 6. Supabase Storage (upload media)
+
+Upload dari CMS memakai **signed upload URL**: server membuat izin upload, lalu
+browser mengirim file langsung ke Supabase Storage. Dengan begitu file tidak
+melewati Vercel sehingga batas body 4,5 MB tidak menjadi masalah.
+
+1. Buat project Supabase, lalu buat bucket bernama `portfolio`.
+2. Atur bucket: **Public bucket** (agar gambar bisa dibaca publik), batas
+   ukuran 10 MB, dan allowed MIME types:
+   `image/jpeg, image/png, image/webp, image/gif, application/pdf`.
+3. Ambil dari Project Settings → API:
+   - Project URL → `NEXT_PUBLIC_SUPABASE_URL`
+   - anon/public key → `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - service_role key → `SUPABASE_SERVICE_ROLE_KEY` (rahasia, server-only)
+4. Isi keempat variabel tersebut di `.env` **laptop** (tempat CMS berjalan).
+   Bucket bisa diganti lewat `SUPABASE_STORAGE_BUCKET` (default `portfolio`).
+
+```env
+NEXT_PUBLIC_SUPABASE_URL="https://xxxx.supabase.co"
+NEXT_PUBLIC_SUPABASE_ANON_KEY="..."
+SUPABASE_SERVICE_ROLE_KEY="..."
+SUPABASE_STORAGE_BUCKET="portfolio"
+```
+
+Tanpa variabel ini, tombol upload akan menampilkan pesan bahwa Storage belum
+dikonfigurasi, dan field URL/path manual tetap bisa dipakai.
+
+> Vercel **tidak** memerlukan variabel Supabase untuk menampilkan gambar, karena
+> halaman publik menyimpan URL absolut. Jangan menaruh service role key di
+> environment yang tidak perlu.
+
 ### Catatan penting
 
 - `NEXT_PUBLIC_SITE_URL` di-inline saat build Vercel. Jika domain berubah,
@@ -209,8 +240,7 @@ produksi karena perintah itu bisa membuat migration baru dan melakukan reset.
 - Ganti `ADMIN_PASSWORD` setelah seed **tidak** mengubah password yang sudah ada;
   seed hanya membuat user baru.
 - CMS lokal tetap membutuhkan koneksi internet ke database hosted.
-- **Upload gambar dari CMS belum tersedia.** Untuk sementara, isi field gambar
-  dengan URL publik dari hosting gambar (mis. Cloudinary/Imgur). Integrasi
-  Supabase Storage direncanakan pada fase berikutnya.
+- Upload media membutuhkan koneksi internet ke Supabase Storage. Field URL/path
+  manual tetap tersedia sebagai fallback.
 - `embedded-postgres` hanya untuk development lokal, bukan untuk produksi.
 - Jangan commit `.env` asli. Gunakan `.env.example` sebagai template.

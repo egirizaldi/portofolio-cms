@@ -38,6 +38,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { UploadButton } from "@/components/admin/upload-button";
 import {
   getApiErrorMessage,
   getNetworkErrorMessage,
@@ -354,14 +355,25 @@ export function ProjectForm({ categories, project }: ProjectFormProps) {
             <CardContent className="space-y-5">
               <div className="space-y-2">
                 <Label htmlFor="project-thumbnail">Thumbnail (URL/path)</Label>
-                <Input
-                  id="project-thumbnail"
-                  {...register("thumbnail")}
-                  placeholder="/uploads/project.jpg"
-                  aria-invalid={Boolean(errors.thumbnail)}
-                />
+                <div className="flex gap-2">
+                  <Input
+                    id="project-thumbnail"
+                    {...register("thumbnail")}
+                    placeholder="/uploads/project.jpg"
+                    aria-invalid={Boolean(errors.thumbnail)}
+                  />
+                  <UploadButton
+                    type="thumbnail"
+                    onUploaded={(url) =>
+                      setValue("thumbnail", url, {
+                        shouldDirty: true,
+                        shouldValidate: true,
+                      })
+                    }
+                  />
+                </div>
                 <p className="text-xs text-muted-foreground">
-                  Integrasi upload menyusul. Isi path atau URL gambar.
+                  Unggah gambar atau isi path/URL secara manual.
                 </p>
                 {errors.thumbnail ? (
                   <p className="text-xs text-destructive">

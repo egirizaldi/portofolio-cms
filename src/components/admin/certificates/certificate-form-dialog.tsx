@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { UploadButton } from "@/components/admin/upload-button";
 import type { CertificateRow } from "@/components/admin/certificates/certificates-manager";
 import {
   getApiErrorMessage,
@@ -56,6 +57,7 @@ export function CertificateFormDialog({
     register,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<
     CertificateFormValues,
@@ -193,14 +195,25 @@ export function CertificateFormDialog({
             <Label htmlFor="certificate-image">
               Path Gambar (opsional)
             </Label>
-            <Input
-              id="certificate-image"
-              {...register("imagePath")}
-              placeholder="/uploads/certificate.jpg"
-              aria-invalid={Boolean(errors.imagePath)}
-            />
+            <div className="flex gap-2">
+              <Input
+                id="certificate-image"
+                {...register("imagePath")}
+                placeholder="/uploads/certificate.jpg"
+                aria-invalid={Boolean(errors.imagePath)}
+              />
+              <UploadButton
+                type="certificate"
+                onUploaded={(url) =>
+                  setValue("imagePath", url, {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  })
+                }
+              />
+            </div>
             <p className="text-xs text-muted-foreground">
-              Integrasi upload menyusul. Isi path atau URL gambar.
+              Unggah gambar atau isi path/URL secara manual.
             </p>
             {errors.imagePath ? (
               <p className="text-xs text-destructive">
