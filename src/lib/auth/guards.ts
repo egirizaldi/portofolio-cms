@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { NextResponse } from "next/server";
 import type { Session } from "next-auth";
 
 import { auth } from "./auth";
@@ -23,6 +24,20 @@ export async function requireAdmin(): Promise<Session> {
   return session;
 }
 
-export async function requireAdminApi(): Promise<Session> {
-  return requireAdmin();
+/**
+ * Guard untuk Route Handler API. Berbeda dari `requireAdmin` yang melakukan
+ * redirect (cocok untuk halaman), fungsi ini mengembalikan respons 401 JSON
+ * agar klien tidak salah mengira request berhasil.
+ */
+export async function requireAdminApi(): Promise<NextResponse | null> {
+  if (process.env.CMS_ENABLED !== "true") {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const session = await auth();
+  if (!session?.user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  return null;
 }

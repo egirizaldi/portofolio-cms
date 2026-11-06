@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
 import { projectSchema } from "@/lib/validations/project";
-import { requireAdmin } from "@/lib/auth/guards";
+import { requireAdminApi } from "@/lib/auth/guards";
 
 /**
  * GET /api/projects/:id
@@ -27,7 +27,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
  * - Validasi menggunakan `projectSchema` (semua field optional kecuali yang ingin diubah).
  */
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  await requireAdmin();
+  const authError = await requireAdminApi();
+  if (authError) return authError;
   const { id } = await params;
   const json = await request.json();
   const partialSchema = projectSchema.partial();
@@ -86,7 +87,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
  * - Menggunakan cascade delete (Prisma menghapus gambar terkait secara otomatis).
  */
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  await requireAdmin();
+  const authError = await requireAdminApi();
+  if (authError) return authError;
   const { id } = await params;
   // Pastikan ada project
   const existing = await prisma.project.findUnique({ where: { id } });

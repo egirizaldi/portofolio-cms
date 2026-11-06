@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 import { categorySchema } from "@/lib/validations/category";
-import { requireAdmin } from "@/lib/auth/guards";
+import { requireAdminApi } from "@/lib/auth/guards";
 
 /** GET /api/categories */
 export async function GET() {
@@ -14,7 +14,8 @@ export async function GET() {
 
 /** POST /api/categories - buat kategori baru (admin only) */
 export async function POST(request: Request) {
-  await requireAdmin();
+  const authError = await requireAdminApi();
+  if (authError) return authError;
   const json = await request.json();
   const result = categorySchema.safeParse(json);
   if (!result.success) {

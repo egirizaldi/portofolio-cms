@@ -1,11 +1,12 @@
 // API route untuk statistik dashboard admin
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
-import { requireAdmin } from "@/lib/auth/guards";
+import { requireAdminApi } from "@/lib/auth/guards";
 
 export async function GET() {
   // Pastikan hanya admin yang dapat mengakses
-  await requireAdmin();
+  const authError = await requireAdminApi();
+  if (authError) return authError;
 
   const [
     projectTotal,

@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 import { projectSchema } from "@/lib/validations/project";
-import { requireAdmin } from "@/lib/auth/guards";
+import { requireAdminApi } from "@/lib/auth/guards";
 import { auth } from "@/lib/auth";
 import { Prisma } from "@prisma/client";
 
@@ -66,7 +66,8 @@ export async function GET(request: Request) {
  */
 export async function POST(request: Request) {
   // Pastikan admin sudah login
-  await requireAdmin();
+  const authError = await requireAdminApi();
+  if (authError) return authError;
 
   const json = await request.json();
   const result = projectSchema.safeParse(json);

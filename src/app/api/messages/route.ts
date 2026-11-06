@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
-import { requireAdmin } from "@/lib/auth/guards";
+import { requireAdminApi } from "@/lib/auth/guards";
 import { MessageStatus, Prisma } from "@prisma/client";
 
 /**
@@ -8,7 +8,8 @@ import { MessageStatus, Prisma } from "@prisma/client";
  * Ambil semua pesan (admin only), support query ?status=UNREAD|READ|ARCHIVED, urutkan createdAt desc
  */
 export async function GET(request: Request) {
-  await requireAdmin();
+  const authError = await requireAdminApi();
+  if (authError) return authError;
 
   const url = new URL(request.url);
   const statusParam = url.searchParams.get("status")?.toUpperCase();

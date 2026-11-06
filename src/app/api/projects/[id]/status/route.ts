@@ -1,7 +1,7 @@
 // API route untuk mengubah status (draft/published) sebuah project
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
-import { requireAdmin } from "@/lib/auth/guards";
+import { requireAdminApi } from "@/lib/auth/guards";
 import { z } from "zod";
 
 const statusSchema = z.object({
@@ -12,7 +12,8 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  await requireAdmin();
+  const authError = await requireAdminApi();
+  if (authError) return authError;
   const { id } = await params;
   const json = await request.json();
   const result = statusSchema.safeParse(json);

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
-import { requireAdmin } from "@/lib/auth/guards";
+import { requireAdminApi } from "@/lib/auth/guards";
 import { experienceSchema } from "@/lib/validations/experience";
 
 /**
@@ -20,7 +20,8 @@ export async function GET() {
  * Buat experience baru (admin only)
  */
 export async function POST(request: Request) {
-  await requireAdmin();
+  const authError = await requireAdminApi();
+  if (authError) return authError;
 
   const json = await request.json();
   const result = experienceSchema.safeParse(json);
