@@ -8,20 +8,22 @@ import { Pagination } from "@/components/public/pagination";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { prisma } from "@/lib/db";
+import { getSiteContent, fillTemplate } from "@/lib/site-content";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Proyek",
-  description:
-    "Kumpulan proyek yang telah saya kerjakan, lengkap dengan teknologi dan studi kasusnya.",
-  openGraph: {
-    title: "Proyek",
-    description:
-      "Kumpulan proyek yang telah saya kerjakan, lengkap dengan teknologi dan studi kasusnya.",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const content = await getSiteContent();
+  return {
+    title: content.projects_meta_title,
+    description: content.projects_meta_description,
+    openGraph: {
+      title: content.projects_meta_title,
+      description: content.projects_meta_description,
+    },
+  };
+}
 
 const PAGE_SIZE = 9;
 
@@ -81,6 +83,8 @@ export default async function ProjectsPage({
       : {}),
   };
 
+  const content = await getSiteContent();
+
   const [total, publishedTotal, categories] = await Promise.all([
     prisma.project.count({ where }),
     prisma.project.count({ where: { status: "PUBLISHED" } }),
@@ -127,13 +131,14 @@ export default async function ProjectsPage({
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-14 sm:py-20">
       <header className="max-w-2xl">
-        <p className="text-sm font-medium text-muted-foreground">Portofolio</p>
+        <p className="text-sm font-medium text-muted-foreground">
+          {content.projects_eyebrow}
+        </p>
         <h1 className="mt-2 text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
-          Proyek yang pernah saya bangun
+          {content.projects_heading}
         </h1>
         <p className="mt-4 text-base leading-7 text-pretty text-muted-foreground">
-          Jelajahi karya pilihan saya, mulai dari aplikasi web, mobile, hingga
-          eksplorasi desain antarmuka.
+          {content.projects_description}
         </p>
       </header>
 
@@ -156,15 +161,15 @@ export default async function ProjectsPage({
               type="search"
               name="q"
               defaultValue={q}
-              placeholder="Cari judul atau deskripsi proyek..."
-              aria-label="Cari proyek"
+              placeholder={content.projects_search_placeholder}
+              aria-label={content.projects_search_placeholder}
               className="h-10 pl-9"
             />
           </div>
 
           <div className="flex gap-2">
             <Button type="submit" className="h-10 px-4">
-              Cari
+              {content.projects_search_button}
             </Button>
             {hasFilter ? (
               <Button
@@ -173,7 +178,7 @@ export default async function ProjectsPage({
                 render={<Link href="/projects" />}
               >
                 <X aria-hidden />
-                Reset
+                {content.projects_reset_button}
               </Button>
             ) : null}
           </div>
@@ -189,7 +194,7 @@ export default async function ProjectsPage({
                 : "border-border text-muted-foreground hover:bg-muted hover:text-foreground",
             )}
           >
-            Semua
+            {content.projects_all_label}
             <span className="opacity-70">{publishedTotal}</span>
           </Link>
 
@@ -217,12 +222,15 @@ export default async function ProjectsPage({
       <div className="mt-8 flex flex-wrap items-center justify-between gap-2 border-b pb-3">
         <p className="text-sm text-muted-foreground">
           {total === 0
-            ? "Tidak ada proyek yang cocok"
-            : `Menampilkan ${projects.length} dari ${total} proyek`}
+            ? content.projects_empty_filter
+            : fillTemplate(content.projects_count_template, {
+                shown: projects.length,
+                total,
+              })}
           {activeCategory ? (
             <>
               {" "}
-              dalam kategori{" "}
+              {content.projects_category_prefix}{" "}
               <span className="font-medium text-foreground">
                 {activeCategory.name}
               </span>
@@ -231,7 +239,8 @@ export default async function ProjectsPage({
         </p>
         {q ? (
           <p className="text-sm text-muted-foreground">
-            Pencarian: <span className="font-medium text-foreground">{q}</span>
+            {content.projects_search_prefix}{" "}
+            <span className="font-medium text-foreground">{q}</span>
           </p>
         ) : null}
       </div>
@@ -242,19 +251,28 @@ export default async function ProjectsPage({
             aria-hidden
             className="mx-auto size-8 text-muted-foreground/50"
           />
-          <h2 className="mt-4 text-base font-semibold">Proyek tidak ditemukan</h2>
+          <h2 className="mt-4 text-base font-semibold">
+            {content.projects_empty_title}
+          </h2>
           <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-muted-foreground">
-            Coba kata kunci lain atau hapus filter kategori untuk melihat semua
-            proyek.
+            {content.projects_empty_description}
           </p>
           <Button className="mt-5" render={<Link href="/projects" />}>
-            Lihat semua proyek
+            {content.projects_empty_cta}
           </Button>
         </div>
       ) : (
         <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {projects.map((project) => (
-            <ProjectCard key={project.id} project={project} />
+            <ProjectCard
+              key={project.id}
+              project={project}
+              labels={{
+                detail: content.project_card_detail,
+                featured: content.project_featured_label,
+                noDate: content.project_no_date,
+              }}
+            />
           ))}
         </div>
       )}

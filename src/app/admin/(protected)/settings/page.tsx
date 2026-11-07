@@ -2,21 +2,21 @@ import type { Metadata } from "next";
 
 import { SettingsForm } from "@/components/admin/settings/settings-form";
 import { prisma } from "@/lib/db";
+import { getSiteContent } from "@/lib/site-content";
 
 export const metadata: Metadata = { title: "Pengaturan" };
 
 export default async function SettingsPage() {
-  const settings = await prisma.setting.findMany();
-  const map = new Map(settings.map((setting) => [setting.key, setting.value]));
+  const [content, cvSetting] = await Promise.all([
+    getSiteContent(),
+    prisma.setting.findUnique({ where: { key: "show_cv_download" } }),
+  ]);
 
   return (
     <SettingsForm
       settings={{
-        site_title: map.get("site_title") ?? "Personal Portfolio",
-        site_description: map.get("site_description") ?? "",
-        contact_email: map.get("contact_email") ?? "",
-        footer_text: map.get("footer_text") ?? "",
-        show_cv_download: map.get("show_cv_download") === "true",
+        ...content,
+        show_cv_download: cvSetting?.value !== "false",
       }}
     />
   );

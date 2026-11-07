@@ -4,17 +4,21 @@ import { ArrowRight, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { prisma } from "@/lib/db";
+import { getSiteContent } from "@/lib/site-content";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Skills",
-  description: "Daftar keahlian teknis dan non-teknis",
-  openGraph: {
-    title: "Skills",
-    description: "Daftar keahlian teknis dan non-teknis.",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const content = await getSiteContent();
+  return {
+    title: content.skills_meta_title,
+    description: content.skills_meta_description,
+    openGraph: {
+      title: content.skills_meta_title,
+      description: content.skills_meta_description,
+    },
+  };
+}
 
 /** Level disimpan 1–10; nilai lama yang memakai skala 0–100 tetap aman. */
 function levelPercent(level: number) {
@@ -23,10 +27,13 @@ function levelPercent(level: number) {
 }
 
 export default async function SkillsPage() {
-  const skills = await prisma.skill.findMany({
-    where: { isActive: true },
-    orderBy: [{ groupName: "asc" }, { displayOrder: "asc" }],
-  });
+  const [skills, content] = await Promise.all([
+    prisma.skill.findMany({
+      where: { isActive: true },
+      orderBy: [{ groupName: "asc" }, { displayOrder: "asc" }],
+    }),
+    getSiteContent(),
+  ]);
 
   const groups = new Map<string, typeof skills>();
   for (const skill of skills) {
@@ -45,13 +52,14 @@ export default async function SkillsPage() {
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-14 sm:py-20">
       <header className="max-w-2xl">
-        <p className="text-sm font-medium text-muted-foreground">Keahlian</p>
+        <p className="text-sm font-medium text-muted-foreground">
+          {content.skills_eyebrow}
+        </p>
         <h1 className="mt-2 text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
-          Skills &amp; kemampuan
+          {content.skills_heading}
         </h1>
         <p className="mt-4 text-base leading-7 text-pretty text-muted-foreground">
-          Kumpulan keahlian yang saya gunakan untuk merancang, membangun, dan
-          merawat produk digital.
+          {content.skills_description}
         </p>
       </header>
 
@@ -61,9 +69,11 @@ export default async function SkillsPage() {
             aria-hidden
             className="mx-auto size-8 text-muted-foreground/50"
           />
-          <h2 className="mt-4 text-base font-semibold">Belum ada skill</h2>
+          <h2 className="mt-4 text-base font-semibold">
+            {content.skills_empty_title}
+          </h2>
           <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-muted-foreground">
-            Keahlian yang ditambahkan melalui dashboard akan muncul di sini.
+            {content.skills_empty_description}
           </p>
         </div>
       ) : (
@@ -79,7 +89,7 @@ export default async function SkillsPage() {
                   {group}
                 </h2>
                 <span className="text-xs text-muted-foreground">
-                  {items.length} skill
+                  {items.length} {content.skills_count_suffix}
                 </span>
               </div>
 
@@ -141,15 +151,14 @@ export default async function SkillsPage() {
       <div className="mt-14 flex flex-col items-center gap-3 rounded-2xl border bg-muted/40 p-6 text-center sm:flex-row sm:justify-between sm:p-8 sm:text-left">
         <div>
           <h2 className="text-lg font-semibold tracking-tight">
-            Lihat penerapannya
+            {content.skills_cta_heading}
           </h2>
           <p className="mt-1 max-w-md text-sm leading-6 text-muted-foreground">
-            Keahlian ini saya pakai untuk membangun proyek nyata. Jelajahi
-            portofolio untuk melihat hasilnya.
+            {content.skills_cta_description}
           </p>
         </div>
         <Button render={<Link href="/projects" />}>
-          Lihat proyek
+          {content.skills_cta_button}
           <ArrowRight aria-hidden />
         </Button>
       </div>

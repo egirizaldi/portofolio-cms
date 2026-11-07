@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
 import { prisma } from "@/lib/db";
+import { getSiteContent } from "@/lib/site-content";
 import { ProjectCard, type ProjectCardData } from "@/components/public/project-card";
 import { Button } from "@/components/ui/button";
 
@@ -20,15 +21,16 @@ const getProfile = cache(async () => {
 });
 
 export async function generateMetadata(): Promise<Metadata> {
-  const profile = await getProfile();
+  const [content, profile] = await Promise.all([getSiteContent(), getProfile()]);
   const description =
+    content.site_description?.trim() ||
     profile?.headline?.trim() ||
     "Portofolio pribadi, proyek pilihan, dan pengalaman profesional.";
 
   return {
     description,
     openGraph: {
-      title: profile?.fullName ?? "Personal Portfolio",
+      title: content.site_title,
       description,
       type: "website",
     },
@@ -36,7 +38,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage() {
-  const profile = await getProfile();
+  const [content, profile] = await Promise.all([getSiteContent(), getProfile()]);
   let featuredProjects: ProjectCardData[] = [];
   try {
     featuredProjects = await prisma.project.findMany({
@@ -74,31 +76,41 @@ export default async function HomePage() {
         </p>
         <div className="mt-8 flex flex-wrap gap-3">
           <Button render={<Link href="/projects" />}>
-            Lihat Proyek
+            {content.home_cta_primary}
             <ArrowRight className="size-4" />
           </Button>
           <Button variant="outline" render={<Link href="/contact" />}>
-            Hubungi Saya
+            {content.home_cta_secondary}
           </Button>
         </div>
       </section>
 
       <section className="mx-auto w-full max-w-5xl px-4 pb-20">
         <div className="mb-6 flex items-end justify-between gap-4">
-          <h2 className="text-lg font-semibold tracking-tight">Proyek Pilihan</h2>
+          <h2 className="text-lg font-semibold tracking-tight">
+            {content.home_projects_heading}
+          </h2>
           <Button variant="ghost" size="sm" render={<Link href="/projects" />}>
-            Semua proyek
+            {content.home_projects_link}
           </Button>
         </div>
 
         {featuredProjects.length === 0 ? (
           <p className="rounded-lg border border-dashed px-4 py-10 text-center text-sm text-muted-foreground">
-            Belum ada proyek yang dipublikasikan.
+            {content.home_projects_empty}
           </p>
         ) : (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {featuredProjects.map((project) => (
-              <ProjectCard key={project.id} project={project} />
+              <ProjectCard
+                key={project.id}
+                project={project}
+                labels={{
+                  detail: content.project_card_detail,
+                  featured: content.project_featured_label,
+                  noDate: content.project_no_date,
+                }}
+              />
             ))}
           </div>
         )}

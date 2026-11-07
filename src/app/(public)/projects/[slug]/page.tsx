@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { prisma } from "@/lib/db";
 import { formatDate } from "@/lib/format";
 import { resolveImageSrc } from "@/lib/media";
+import { getSiteContent } from "@/lib/site-content";
 
 export const dynamic = "force-dynamic";
 
@@ -41,11 +42,14 @@ export async function generateMetadata({
   params,
 }: ProjectPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const project = await getProject(slug);
+  const [project, content] = await Promise.all([
+    getProject(slug),
+    getSiteContent(),
+  ]);
 
   if (!project) {
     return {
-      title: "Proyek tidak ditemukan",
+      title: content.project_not_found_title,
       robots: { index: false, follow: false },
     };
   }
@@ -75,7 +79,10 @@ export async function generateMetadata({
 
 export default async function ProjectDetailPage({ params }: ProjectPageProps) {
   const { slug } = await params;
-  const project = await getProject(slug);
+  const [project, content] = await Promise.all([
+    getProject(slug),
+    getSiteContent(),
+  ]);
 
   if (!project) {
     notFound();
@@ -124,7 +131,7 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
         className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
       >
         <ArrowLeft aria-hidden className="size-4" />
-        Semua proyek
+        {content.project_back_label}
       </Link>
 
       <header className="mt-6 max-w-3xl">
@@ -152,9 +159,11 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
         <div className="mt-5 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
           <span className="inline-flex items-center gap-1.5">
             <CalendarDays aria-hidden className="size-4" />
-            {date ?? "Tanpa tanggal"}
+            {date ?? content.project_no_date}
           </span>
-          {project.isFeatured ? <Badge>Featured</Badge> : null}
+          {project.isFeatured ? (
+            <Badge>{content.project_featured_label}</Badge>
+          ) : null}
         </div>
       </header>
 
@@ -177,7 +186,7 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
       <div className="mt-10 grid gap-10 lg:grid-cols-[minmax(0,1fr)_280px]">
         <article className="min-w-0">
           <h2 className="text-lg font-semibold tracking-tight">
-            Tentang proyek
+            {content.project_about_heading}
           </h2>
           <p className="mt-3 whitespace-pre-line text-sm leading-7 text-muted-foreground">
             {project.description}
@@ -185,7 +194,9 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
 
           {gallery.length > 0 ? (
             <section className="mt-10">
-              <h2 className="text-lg font-semibold tracking-tight">Galeri</h2>
+              <h2 className="text-lg font-semibold tracking-tight">
+                {content.project_gallery_heading}
+              </h2>
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 {gallery.map((image) => (
                   <figure
@@ -217,7 +228,9 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
         <aside className="space-y-4">
           {project.technologies.length > 0 ? (
             <div className="rounded-xl border p-5">
-              <h2 className="text-sm font-semibold">Teknologi</h2>
+              <h2 className="text-sm font-semibold">
+                {content.project_tech_heading}
+              </h2>
               <div className="mt-3 flex flex-wrap gap-1.5">
                 {project.technologies.map((technology) => (
                   <Badge key={technology} variant="secondary">
@@ -230,7 +243,9 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
 
           {project.demoUrl || project.githubUrl ? (
             <div className="space-y-2 rounded-xl border p-5">
-              <h2 className="text-sm font-semibold">Tautan</h2>
+              <h2 className="text-sm font-semibold">
+                {content.project_links_heading}
+              </h2>
               {project.demoUrl ? (
                 <Button
                   className="w-full justify-start"
@@ -243,7 +258,7 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
                   }
                 >
                   <ExternalLink aria-hidden />
-                  Live demo
+                  {content.project_demo_label}
                 </Button>
               ) : null}
               {project.githubUrl ? (
@@ -259,27 +274,35 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
                   }
                 >
                   <GitBranch aria-hidden />
-                  Repository
+                  {content.project_repo_label}
                 </Button>
               ) : null}
             </div>
           ) : null}
 
           <div className="rounded-xl border p-5">
-            <h2 className="text-sm font-semibold">Detail</h2>
+            <h2 className="text-sm font-semibold">
+              {content.project_detail_heading}
+            </h2>
             <dl className="mt-3 space-y-3 text-sm">
               <div className="flex items-start justify-between gap-3">
-                <dt className="text-muted-foreground">Tanggal</dt>
+                <dt className="text-muted-foreground">
+                  {content.project_date_label}
+                </dt>
                 <dd className="text-right font-medium">
-                  {date ?? "Tanpa tanggal"}
+                  {date ?? content.project_no_date}
                 </dd>
               </div>
               <div className="flex items-start justify-between gap-3">
-                <dt className="text-muted-foreground">Kategori</dt>
+                <dt className="text-muted-foreground">
+                  {content.project_category_label}
+                </dt>
                 <dd className="text-right font-medium">
                   {project.categories.length > 0
-                    ? project.categories.map((category) => category.name).join(", ")
-                    : "Tanpa kategori"}
+                    ? project.categories
+                        .map((category) => category.name)
+                        .join(", ")
+                    : content.project_no_category}
                 </dd>
               </div>
             </dl>
@@ -292,21 +315,29 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
               <h2 className="text-lg font-semibold tracking-tight">
-                Proyek lainnya
+                {content.project_related_heading}
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Karya lain dengan kategori serupa.
+                {content.project_related_description}
               </p>
             </div>
             <Button variant="ghost" size="sm" render={<Link href="/projects" />}>
-              Lihat semua
+              {content.project_related_link}
               <ArrowUpRight aria-hidden />
             </Button>
           </div>
 
           <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {relatedProjects.map((related) => (
-              <ProjectCard key={related.id} project={related} />
+              <ProjectCard
+                key={related.id}
+                project={related}
+                labels={{
+                  detail: content.project_card_detail,
+                  featured: content.project_featured_label,
+                  noDate: content.project_no_date,
+                }}
+              />
             ))}
           </div>
         </section>

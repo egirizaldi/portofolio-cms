@@ -15,14 +15,17 @@ import { TimelineEntry } from "@/components/public/timeline-entry";
 import { Button } from "@/components/ui/button";
 import { prisma } from "@/lib/db";
 import { resolveImageSrc } from "@/lib/media";
+import { getSiteContent } from "@/lib/site-content";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Tentang",
-  description:
-    "Profil singkat, keahlian, pengalaman, dan latar belakang pendidikan saya.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const content = await getSiteContent();
+  return {
+    title: content.about_meta_title,
+    description: content.about_meta_description,
+  };
+}
 
 function initials(name: string) {
   return name
@@ -34,7 +37,7 @@ function initials(name: string) {
 }
 
 export default async function AboutPage() {
-  const [profile, skills, experiences, educations, cvSetting] =
+  const [profile, skills, experiences, educations, cvSetting, content] =
     await Promise.all([
       prisma.profile.findFirst(),
       prisma.skill.findMany({
@@ -50,6 +53,7 @@ export default async function AboutPage() {
         take: 3,
       }),
       prisma.setting.findUnique({ where: { key: "show_cv_download" } }),
+      getSiteContent(),
     ]);
 
   const showCvDownload = cvSetting?.value !== "false";
@@ -157,7 +161,7 @@ export default async function AboutPage() {
 
           <div className="mt-7 flex flex-wrap gap-2">
             <Button render={<Link href="/projects" />}>
-              Lihat proyek
+              {content.about_cta_projects}
               <ArrowRight aria-hidden />
             </Button>
             {profile?.cvFile && showCvDownload ? (
@@ -167,7 +171,7 @@ export default async function AboutPage() {
                   <a href={profile.cvFile} target="_blank" rel="noreferrer" />
                 }
               >
-                Unduh CV
+                {content.about_cta_cv}
               </Button>
             ) : null}
           </div>
@@ -178,7 +182,9 @@ export default async function AboutPage() {
         <section className="mt-16 border-t pt-10">
           <div className="flex items-center gap-2">
             <Sparkles aria-hidden className="size-5 text-muted-foreground" />
-            <h2 className="text-xl font-semibold tracking-tight">Keahlian</h2>
+            <h2 className="text-xl font-semibold tracking-tight">
+              {content.about_skills_heading}
+            </h2>
           </div>
 
           <div className="mt-6 grid gap-6 sm:grid-cols-2">
@@ -229,11 +235,11 @@ export default async function AboutPage() {
                 className="size-5 text-muted-foreground"
               />
               <h2 className="text-xl font-semibold tracking-tight">
-                Pengalaman
+                {content.about_experience_heading}
               </h2>
             </div>
             <Button variant="ghost" size="sm" render={<Link href="/experience" />}>
-              Lihat semua
+              {content.about_link_all}
               <ArrowRight aria-hidden />
             </Button>
           </div>
@@ -242,6 +248,7 @@ export default async function AboutPage() {
             {experiences.map((experience) => (
               <TimelineEntry
                 key={experience.id}
+                currentLabel={content.timeline_current}
                 entry={{
                   id: experience.id,
                   title: experience.position,
@@ -267,11 +274,11 @@ export default async function AboutPage() {
                 className="size-5 text-muted-foreground"
               />
               <h2 className="text-xl font-semibold tracking-tight">
-                Pendidikan
+                {content.about_education_heading}
               </h2>
             </div>
             <Button variant="ghost" size="sm" render={<Link href="/experience" />}>
-              Lihat semua
+              {content.about_link_all}
               <ArrowRight aria-hidden />
             </Button>
           </div>
@@ -280,6 +287,7 @@ export default async function AboutPage() {
             {educations.map((education) => (
               <TimelineEntry
                 key={education.id}
+                currentLabel={content.timeline_current}
                 entry={{
                   id: education.id,
                   title: education.program,

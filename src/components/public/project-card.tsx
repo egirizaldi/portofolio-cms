@@ -20,12 +20,26 @@ export type ProjectCardData = {
   categories: { id: string; name: string }[];
 };
 
+type ProjectCardLabels = {
+  detail?: string;
+  featured?: string;
+  noDate?: string;
+};
+
 type ProjectCardProps = {
   project: ProjectCardData;
   className?: string;
+  labels?: ProjectCardLabels;
 };
 
-export function ProjectCard({ project, className }: ProjectCardProps) {
+export function ProjectCard({
+  project,
+  className,
+  labels,
+}: ProjectCardProps) {
+  const detailLabel = labels?.detail ?? "Lihat detail";
+  const featuredLabel = labels?.featured ?? "Featured";
+  const noDateLabel = labels?.noDate ?? "Tanpa tanggal";
   const image = resolveImageSrc(project.thumbnail);
   const date = formatDate(project.projectDate ?? project.createdAt, {
     month: "short",
@@ -57,7 +71,7 @@ export function ProjectCard({ project, className }: ProjectCardProps) {
         )}
 
         {project.isFeatured ? (
-          <Badge className="absolute left-3 top-3 shadow-sm">Featured</Badge>
+          <Badge className="absolute left-3 top-3 shadow-sm">{featuredLabel}</Badge>
         ) : null}
       </div>
 
@@ -84,10 +98,10 @@ export function ProjectCard({ project, className }: ProjectCardProps) {
         <div className="mt-auto flex items-center justify-between gap-3 pt-2 text-xs text-muted-foreground">
           <span className="inline-flex items-center gap-1.5">
             <CalendarDays aria-hidden className="size-3.5" />
-            {date ?? "Tanpa tanggal"}
+            {date ?? noDateLabel}
           </span>
           <span className="inline-flex items-center gap-1 font-medium text-foreground/80 transition-colors group-hover:text-foreground">
-            Lihat detail
+            {detailLabel}
             <ArrowUpRight aria-hidden className="size-3.5" />
           </span>
         </div>

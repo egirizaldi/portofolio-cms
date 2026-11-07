@@ -8,12 +8,54 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
+export type ContactFormLabels = {
+  nameLabel: string;
+  namePlaceholder: string;
+  emailLabel: string;
+  emailPlaceholder: string;
+  subjectLabel: string;
+  subjectPlaceholder: string;
+  messageLabel: string;
+  messagePlaceholder: string;
+  submit: string;
+  submitting: string;
+  successTitle: string;
+  successMessage: string;
+  sendAnother: string;
+  errorFallback: string;
+  networkError: string;
+};
+
+const defaultLabels: ContactFormLabels = {
+  nameLabel: "Nama",
+  namePlaceholder: "Nama Anda",
+  emailLabel: "Email",
+  emailPlaceholder: "nama@email.com",
+  subjectLabel: "Subjek",
+  subjectPlaceholder: "Ada yang bisa saya bantu?",
+  messageLabel: "Pesan",
+  messagePlaceholder: "Ceritakan proyek atau ide yang ingin Anda diskusikan...",
+  submit: "Kirim pesan",
+  submitting: "Mengirim...",
+  successTitle: "Pesan terkirim",
+  successMessage:
+    "Pesan berhasil dikirim. Terima kasih, saya akan membalas secepatnya.",
+  sendAnother: "Kirim pesan lain",
+  errorFallback: "Pesan gagal dikirim. Silakan coba lagi beberapa saat lagi.",
+  networkError:
+    "Tidak dapat menghubungi server. Periksa koneksi Anda lalu coba lagi.",
+};
+
 type FormState = {
   status: "idle" | "submitting" | "success" | "error";
   message?: string;
 };
 
-export function ContactForm() {
+export function ContactForm({
+  labels = defaultLabels,
+}: {
+  labels?: ContactFormLabels;
+}) {
   const [state, setState] = useState<FormState>({ status: "idle" });
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -46,7 +88,7 @@ export function ContactForm() {
           status: "error",
           message:
             (typeof apiError === "string" ? apiError : apiError?.message) ??
-            "Pesan gagal dikirim. Silakan coba lagi beberapa saat lagi.",
+            labels.errorFallback,
         });
         return;
       }
@@ -54,14 +96,12 @@ export function ContactForm() {
       form.reset();
       setState({
         status: "success",
-        message:
-          "Pesan berhasil dikirim. Terima kasih, saya akan membalas secepatnya.",
+        message: labels.successMessage,
       });
     } catch {
       setState({
         status: "error",
-        message:
-          "Tidak dapat menghubungi server. Periksa koneksi Anda lalu coba lagi.",
+        message: labels.networkError,
       });
     }
   }
@@ -72,14 +112,14 @@ export function ContactForm() {
         role="status"
         className="rounded-xl border bg-muted/40 p-6 text-sm leading-6"
       >
-        <p className="font-medium text-foreground">Pesan terkirim</p>
+        <p className="font-medium text-foreground">{labels.successTitle}</p>
         <p className="mt-1 text-muted-foreground">{state.message}</p>
         <Button
           variant="outline"
           className="mt-4"
           onClick={() => setState({ status: "idle" })}
         >
-          Kirim pesan lain
+          {labels.sendAnother}
         </Button>
       </div>
     );
@@ -89,50 +129,50 @@ export function ContactForm() {
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-1.5">
-          <Label htmlFor="contact-name">Nama</Label>
+          <Label htmlFor="contact-name">{labels.nameLabel}</Label>
           <Input
             id="contact-name"
             name="name"
             autoComplete="name"
             required
             minLength={2}
-            placeholder="Nama Anda"
+            placeholder={labels.namePlaceholder}
           />
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="contact-email">Email</Label>
+          <Label htmlFor="contact-email">{labels.emailLabel}</Label>
           <Input
             id="contact-email"
             name="email"
             type="email"
             autoComplete="email"
             required
-            placeholder="nama@email.com"
+            placeholder={labels.emailPlaceholder}
           />
         </div>
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="contact-subject">Subjek</Label>
+        <Label htmlFor="contact-subject">{labels.subjectLabel}</Label>
         <Input
           id="contact-subject"
           name="subject"
           required
           minLength={3}
-          placeholder="Ada yang bisa saya bantu?"
+          placeholder={labels.subjectPlaceholder}
         />
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="contact-message">Pesan</Label>
+        <Label htmlFor="contact-message">{labels.messageLabel}</Label>
         <Textarea
           id="contact-message"
           name="message"
           required
           minLength={10}
           rows={6}
-          placeholder="Ceritakan proyek atau ide yang ingin Anda diskusikan..."
+          placeholder={labels.messagePlaceholder}
         />
       </div>
 
@@ -161,7 +201,7 @@ export function ContactForm() {
         ) : (
           <Send aria-hidden />
         )}
-        {state.status === "submitting" ? "Mengirim..." : "Kirim pesan"}
+        {state.status === "submitting" ? labels.submitting : labels.submit}
       </Button>
     </form>
   );

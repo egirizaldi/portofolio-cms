@@ -12,7 +12,13 @@ export type TimelineEntryData = {
   isCurrent: boolean;
 };
 
-export function TimelineEntry({ entry }: { entry: TimelineEntryData }) {
+export function TimelineEntry({
+  entry,
+  currentLabel = "Sekarang",
+}: {
+  entry: TimelineEntryData;
+  currentLabel?: string;
+}) {
   return (
     <article className="relative border-l pb-8 pl-6 last:pb-0">
       <span
@@ -22,7 +28,9 @@ export function TimelineEntry({ entry }: { entry: TimelineEntryData }) {
 
       <div className="flex flex-wrap items-center gap-2">
         <h3 className="font-medium tracking-tight">{entry.title}</h3>
-        {entry.isCurrent ? <Badge variant="secondary">Sekarang</Badge> : null}
+        {entry.isCurrent ? (
+          <Badge variant="secondary">{currentLabel}</Badge>
+        ) : null}
       </div>
 
       <p className="mt-0.5 text-sm text-muted-foreground">

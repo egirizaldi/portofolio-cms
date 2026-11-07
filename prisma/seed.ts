@@ -8,6 +8,8 @@
 import { PrismaClient, ProjectStatus } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
+import { CONTENT_DEFAULTS } from "../src/lib/content";
+
 const prisma = new PrismaClient();
 
 async function main() {
@@ -49,11 +51,11 @@ async function main() {
   }
 
   const settings: Array<[string, string]> = [
-    ["site_title", "Personal Portfolio"],
-    ["site_description", "Portofolio pribadi dan proyek pilihan."],
-    ["site_keywords", "portofolio, web developer, proyek"],
-    ["footer_text", "© 2026 Personal Portfolio. All rights reserved."],
-    ["contact_email", adminEmail],
+    ...Object.entries(CONTENT_DEFAULTS).map(
+      ([key, value]) =>
+        [key, key === "contact_email" ? adminEmail : value] as [string, string],
+    ),
+    ["show_cv_download", "true"],
   ];
 
   for (const [key, value] of settings) {

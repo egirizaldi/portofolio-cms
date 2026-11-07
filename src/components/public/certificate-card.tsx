@@ -17,8 +17,10 @@ export type CertificateCardData = {
 
 export function CertificateCard({
   certificate,
+  credentialLabel = "Lihat kredensial",
 }: {
   certificate: CertificateCardData;
+  credentialLabel?: string;
 }) {
   const image = resolveImageSrc(certificate.imagePath);
   const issued = formatDate(certificate.issuedAt, {
@@ -79,7 +81,7 @@ export function CertificateCard({
                 />
               }
             >
-              Lihat kredensial
+              {credentialLabel}
               <ExternalLink aria-hidden />
             </Button>
           ) : null}

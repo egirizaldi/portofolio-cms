@@ -1,45 +1,27 @@
 import { z } from "zod";
 
-export const SETTING_KEYS = [
-  "site_title",
-  "site_description",
-  "contact_email",
-  "footer_text",
-  "show_cv_download",
-] as const;
+import { CONTENT_KEYS } from "@/lib/content";
 
-export const settingKeySchema = z.enum(SETTING_KEYS);
+/** Semua key yang boleh disimpan: konten situs + pengaturan khusus. */
+export const SETTING_KEYS: readonly string[] = [
+  ...CONTENT_KEYS,
+  "show_cv_download",
+];
+
+export const settingKeySchema = z
+  .string({ error: "Key setting wajib diisi." })
+  .refine((key) => SETTING_KEYS.includes(key), {
+    error: "Key setting tidak dikenal.",
+  });
 
 export const singleSettingSchema = z.object({
   key: settingKeySchema,
-  value: z.string({ error: "Value wajib diisi." }),
+  value: z
+    .string({ error: "Value wajib diisi." })
+    .max(5000, { error: "Value maksimal 5000 karakter." }),
 });
 
 export const bulkSettingsSchema = z.array(singleSettingSchema);
 
 export type SingleSettingInput = z.infer<typeof singleSettingSchema>;
 export type BulkSettingsInput = z.infer<typeof bulkSettingsSchema>;
-
-/** Skema khusus form pengaturan di dashboard admin. */
-export const settingsFormSchema = z.object({
-  site_title: z
-    .string({ error: "Judul website wajib diisi." })
-    .trim()
-    .min(1, { error: "Judul website wajib diisi." })
-    .max(120, { error: "Judul website maksimal 120 karakter." }),
-  site_description: z
-    .string()
-    .trim()
-    .max(300, { error: "Deskripsi SEO maksimal 300 karakter." }),
-  contact_email: z.union([
-    z.email({ error: "Format email tidak valid." }),
-    z.literal(""),
-  ]),
-  footer_text: z
-    .string()
-    .trim()
-    .max(300, { error: "Teks footer maksimal 300 karakter." }),
-  show_cv_download: z.boolean(),
-});
-
-export type SettingsFormInput = z.infer<typeof settingsFormSchema>;

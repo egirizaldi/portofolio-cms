@@ -1,7 +1,6 @@
 "use client";
 
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { useState } from "react";
 import { Loader2, Save } from "lucide-react";
 import { toast } from "sonner";
 
@@ -23,33 +22,54 @@ import {
   readJson,
 } from "@/lib/api";
 import {
-  settingsFormSchema,
-  type SettingsFormInput,
-} from "@/lib/validations/settings";
+  CONTENT_KEYS,
+  CONTENT_SECTIONS,
+  type SiteContent,
+} from "@/lib/content";
+
+export type SettingsFormValues = SiteContent & {
+  show_cv_download: boolean;
+};
 
 type SettingsFormProps = {
-  settings: SettingsFormInput;
+  settings: SettingsFormValues;
 };
 
 export function SettingsForm({ settings }: SettingsFormProps) {
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    watch,
-    formState: { errors, isSubmitting },
-  } = useForm<SettingsFormInput, unknown, SettingsFormInput>({
-    resolver: zodResolver(settingsFormSchema),
-    defaultValues: settings,
+  const [values, setValues] = useState<Record<string, string>>(() => {
+    const initial: Record<string, string> = {};
+    for (const key of CONTENT_KEYS) initial[key] = settings[key] ?? "";
+    return initial;
   });
+  const [showCvDownload, setShowCvDownload] = useState(
+    settings.show_cv_download,
+  );
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const showCvDownload = watch("show_cv_download");
+  function update(key: string, value: string) {
+    setValues((current) => ({ ...current, [key]: value }));
+  }
 
-  async function onSubmit(values: SettingsFormInput) {
-    const payload = Object.entries(values).map(([key, value]) => ({
-      key,
-      value: typeof value === "boolean" ? String(value) : value,
-    }));
+  async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!values.site_title?.trim()) {
+      toast.error("Judul website wajib diisi.");
+      return;
+    }
+
+    const email = values.contact_email?.trim();
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      toast.error("Format email kontak tidak valid.");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    const payload = [
+      ...CONTENT_KEYS.map((key) => ({ key, value: values[key] ?? "" })),
+      { key: "show_cv_download", value: String(showCvDownload) },
+    ];
 
     try {
       const response = await fetch("/api/settings", {
@@ -71,16 +91,18 @@ export function SettingsForm({ settings }: SettingsFormProps) {
       toast.error("Gagal menyimpan pengaturan", {
         description: getNetworkErrorMessage(error),
       });
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
+    <form onSubmit={onSubmit} className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Pengaturan</h1>
           <p className="text-sm text-muted-foreground">
-            Konfigurasi umum website portofolio.
+            Semua teks yang tampil di website publik dapat diubah di sini.
           </p>
         </div>
         <Button type="submit" disabled={isSubmitting}>
@@ -93,105 +115,68 @@ export function SettingsForm({ settings }: SettingsFormProps) {
         </Button>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>SEO &amp; Identitas</CardTitle>
-          <CardDescription>
-            Dipakai sebagai judul dan deskripsi situs di mesin pencari.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-5">
-          <div className="space-y-2">
-            <Label htmlFor="site_title">Judul Website</Label>
-            <Input
-              id="site_title"
-              {...register("site_title")}
-              placeholder="Personal Portfolio"
-              aria-invalid={Boolean(errors.site_title)}
-            />
-            {errors.site_title ? (
-              <p className="text-xs text-destructive">
-                {errors.site_title.message}
-              </p>
+      {CONTENT_SECTIONS.map((section) => (
+        <Card key={section.id}>
+          <CardHeader>
+            <CardTitle>{section.title}</CardTitle>
+            {section.description ? (
+              <CardDescription>{section.description}</CardDescription>
             ) : null}
-          </div>
+          </CardHeader>
+          <CardContent className="grid gap-5 sm:grid-cols-2">
+            {section.fields.map((field) => {
+              const id = `content-${field.key}`;
+              const value = values[field.key] ?? "";
+              const isWide = field.type === "textarea";
 
-          <div className="space-y-2">
-            <Label htmlFor="site_description">Deskripsi SEO</Label>
-            <Textarea
-              id="site_description"
-              rows={3}
-              {...register("site_description")}
-              placeholder="Portofolio pribadi dan proyek pilihan."
-              aria-invalid={Boolean(errors.site_description)}
-            />
-            {errors.site_description ? (
-              <p className="text-xs text-destructive">
-                {errors.site_description.message}
-              </p>
+              return (
+                <div
+                  key={field.key}
+                  className={isWide ? "space-y-2 sm:col-span-2" : "space-y-2"}
+                >
+                  <Label htmlFor={id}>{field.label}</Label>
+                  {field.type === "textarea" ? (
+                    <Textarea
+                      id={id}
+                      rows={3}
+                      value={value}
+                      maxLength={field.maxLength}
+                      onChange={(event) => update(field.key, event.target.value)}
+                    />
+                  ) : (
+                    <Input
+                      id={id}
+                      type={field.type === "email" ? "email" : "text"}
+                      value={value}
+                      maxLength={field.maxLength}
+                      onChange={(event) => update(field.key, event.target.value)}
+                    />
+                  )}
+                  {field.hint ? (
+                    <p className="text-xs text-muted-foreground">{field.hint}</p>
+                  ) : null}
+                </div>
+              );
+            })}
+
+            {section.id === "identitas" ? (
+              <div className="flex items-center justify-between gap-4 rounded-lg border p-4 sm:col-span-2">
+                <div>
+                  <Label htmlFor="show_cv_download">Tombol unduh CV</Label>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Tampilkan tombol unduh CV pada halaman publik.
+                  </p>
+                </div>
+                <Switch
+                  id="show_cv_download"
+                  checked={showCvDownload}
+                  onCheckedChange={setShowCvDownload}
+                />
+              </div>
             ) : null}
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Kontak &amp; Footer</CardTitle>
-          <CardDescription>
-            Informasi yang tampil pada bagian bawah website.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-5">
-          <div className="space-y-2">
-            <Label htmlFor="contact_email">Email Kontak</Label>
-            <Input
-              id="contact_email"
-              type="email"
-              {...register("contact_email")}
-              placeholder="nama@email.com"
-              aria-invalid={Boolean(errors.contact_email)}
-            />
-            {errors.contact_email ? (
-              <p className="text-xs text-destructive">
-                {errors.contact_email.message}
-              </p>
-            ) : null}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="footer_text">Teks Footer</Label>
-            <Input
-              id="footer_text"
-              {...register("footer_text")}
-              placeholder="© 2026 Personal Portfolio."
-              aria-invalid={Boolean(errors.footer_text)}
-            />
-            {errors.footer_text ? (
-              <p className="text-xs text-destructive">
-                {errors.footer_text.message}
-              </p>
-            ) : null}
-          </div>
-
-          <div className="flex items-center justify-between gap-4 rounded-lg border p-4">
-            <div>
-              <Label htmlFor="show_cv_download">Tombol unduh CV</Label>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Tampilkan tombol unduh CV pada halaman publik.
-              </p>
-            </div>
-            <Switch
-              id="show_cv_download"
-              checked={showCvDownload}
-              onCheckedChange={(checked) =>
-                setValue("show_cv_download", checked, {
-                  shouldDirty: true,
-                })
-              }
-            />
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      ))}
 
       <div className="flex justify-end">
         <Button type="submit" disabled={isSubmitting}>
