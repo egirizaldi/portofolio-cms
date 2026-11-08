@@ -259,7 +259,7 @@ export const CONTENT_SECTIONS: ContentSection[] = [
         key: "contact_email",
         label: "Email Kontak",
         type: "email",
-        hint: "Email publik yang ditampilkan di halaman kontak.",
+        hint: "Dipakai sebagai cadangan jika email pada Profil masih kosong.",
         maxLength: 160,
       },
     ],
@@ -823,11 +823,3 @@ export const CONTENT_SECTIONS: ContentSection[] = [
     ],
   },
 ];
-
-export function contentFieldLabel(key: ContentKey): string {
-  for (const section of CONTENT_SECTIONS) {
-    const field = section.fields.find((item) => item.key === key);
-    if (field) return field.label;
-  }
-  return key;
-}
